@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>逾期之书 · 骨架验证切片（夜 A · 热点版）</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="frame">
+    <div class="topbar">
+      <div class="head">逾期之书 <span class="sub">· 夜 A《夹在书里的信》· 骨架验证切片</span></div>
+      <button id="noise-toggle" class="noise-btn" title="雨声白噪音">雨声 ◻</button>
+    </div>
+
+    <div class="layout">
+      <div class="main">
+        <div id="stage" class="stage"></div>
+        <div id="puzzle" class="puzzle"></div>
+        <div id="actions" class="actions"></div>
+      </div>
+      <aside class="side">
+        <div id="clues" class="panel">线索（空）</div>
+        <div id="memories" class="panel">记忆（空）</div>
+        <div class="clock">距天亮 · 还有很久</div>
+      </aside>
+    </div>
+
+    <!-- 管理员常驻对话条 -->
+    <div id="companion" class="companion">
+      <span class="companion-name">管理员</span><span class="companion-line dim">（在柜台后，没抬头）</span>
+    </div>
+  </div>
+
+  <div id="region-map" style="display:none"></div>
+
+  <script src="../engine/engine.js"></script>
+  <script src="../content/nights/night_a.js"></script>
+  <script>
+    Game.start(NIGHT);
+
+    // —— 白噪音层（雨声）：WebAudio 棕噪，无外部素材 ——
+    (function () {
+      let ctx = null, src = null, on = false;
+      const btn = document.getElementById('noise-toggle');
+      function makeSource() {
+        const len = ctx.sampleRate * 2;
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < len; i++) {
+          const white = Math.random() * 2 - 1;
+          last = (last + 0.02 * white) / 1.02;   // 棕噪：低频偏多，像远处雨
+          d[i] = last * 3.2;
+        }
+        src = ctx.createBufferSource();
+        src.buffer = buf; src.loop = true;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.18;
+        src.connect(gain).connect(ctx.destination);
+      }
+      btn.addEventListener('click', () => {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        if (!on) {
+          if (!src) makeSource();
+          src.start(0); on = true;
+          btn.textContent = '雨声 ◼'; btn.classList.add('on');
+        } else {
+          try { src.stop(); } catch (e) {}
+          src = null; on = false;
+          btn.textContent = '雨声 ◻'; btn.classList.remove('on');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>逾期之书 · 夜 A 验收壳</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="frame">
+    <div class="head">逾期之书 <span class="sub">· 夜 A《夹在书里的信》· 网页验收壳（读 Godot 同一份地基）</span></div>
+    <div id="title-bar" class="title-bar"></div>
+    <div class="layout">
+      <div class="main">
+        <div id="stage" class="stage"></div>
+        <div id="puzzle" class="puzzle"></div>
+        <div id="actions" class="actions"></div>
+      </div>
+      <aside class="side">
+        <div id="clues" class="panel">线索（空）</div>
+        <div id="memories" class="panel">记忆（空）</div>
+        <div id="companion" class="companion"></div>
+        <div class="clock">距天亮 · 还有很久</div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- 薄壳引擎：只解释 night_a.json，不背内容逻辑 -->
+  <script src="engine.js"></script>
+  <script>
+    // 网页壳直接读 Godot 正式线的同一份内容 JSON（单一事实源）
+    // 路径相对 demo/ 指向上级 godot/content/night_a.json
+    fetch('../godot/content/night_a.json')
+      .then(r => r.json())
+      .then(night => { window.NIGHT = night; Game.start(night); })
+      .catch(err => {
+        document.getElementById('stage').innerHTML =
+          '<p class="narration">无法加载地基内容（night_a.json）。</p>' +
+          '<p class="narration">请通过本地服务器打开（如 node _server.js），不要用 file:// 直接双击。</p>';
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

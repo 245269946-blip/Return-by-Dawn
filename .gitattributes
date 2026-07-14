@@ -1,0 +1,11 @@
+# 强制 Godot 工程文件使用 LF，避免 Windows/macOS/Linux 间换行差异造成 noisy diff
+*.godot text eol=lf
+*.gd text eol=lf
+*.tres text eol=lf
+*.tscn text eol=lf
+*.uid text eol=lf
+*.cfg text eol=lf
+*.import text eol=lf
+
+# 兜底：其余文本走自动检测
+* text=auto

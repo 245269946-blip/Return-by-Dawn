@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>逾期之书 · 夜 A（单文件版）</title>
+  <style>
+:root{
+  --bg:#0d0f12; --panel:#16191f; --ink:#e9e3d6; --dim:#9a948a;
+  --warm:#e8b06a; --line:#2a2f37; --paper:#cdbf9a;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Noto Serif SC",serif; line-height:1.9; letter-spacing:.02em;}
+.frame{max-width:880px; margin:40px auto; padding:0 20px}
+.head{font-size:20px; color:var(--ink); border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:22px}
+.sub{color:var(--dim); font-size:14px; font-weight:400}
+.layout{display:flex; gap:24px; align-items:flex-start}
+.main{flex:1; min-width:0}
+.side{width:210px; flex:none}
+.stage{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:26px 28px; min-height:200px; font-size:16px;}
+.narration{margin:0}
+.scene-name{color:var(--warm); font-weight:600; font-size:15px; letter-spacing:.1em; margin:0 0 12px}
+.hub-hint{color:var(--dim); font-style:italic; margin:0 0 16px}
+.notice-card{background:#0a0c0f; border:1px dashed var(--paper); border-radius:8px; padding:22px; font-family:"SFMono-Regular",Consolas,monospace; color:var(--paper);}
+.notice-top{font-size:12px; letter-spacing:.3em; color:var(--dim); margin-bottom:14px}
+.notice-body{font-size:15px; line-height:2; white-space:pre-wrap}
+.notice-foot{margin-top:16px; font-size:12px; color:var(--dim); text-align:right}
+.puzzle{margin-top:16px; display:flex; flex-direction:column; gap:10px}
+.pz{background:#11141a; border:1px solid var(--line); border-radius:8px; padding:16px 18px}
+.pz-prompt{margin:0 0 12px; color:var(--ink); font-size:15px}
+.pz-input{background:#0a0c0f; border:1px solid var(--line); color:var(--paper); border-radius:6px; padding:9px 12px; font-family:inherit; font-size:14px; min-width:200px;}
+.pz-input:focus{outline:none; border-color:var(--warm)}
+.pz-fb{margin:10px 0 0; color:var(--warm); font-style:italic; font-size:14px}
+.pz-locked{color:var(--dim); font-style:italic; margin:0; font-size:14px}
+.actions{margin-top:18px; display:flex; flex-wrap:wrap; gap:12px}
+.btn{background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:10px 18px; font-family:inherit; font-size:14px; cursor:pointer; transition:.2s;}
+.btn:hover{border-color:var(--warm); color:var(--warm)}
+.btn.primary{border-color:var(--warm); color:var(--warm)}
+.btn.ghost{color:var(--dim)}
+.btn:disabled{opacity:.4; cursor:default}
+.catch{color:var(--warm); font-style:italic; margin-top:18px}
+.curator{color:var(--dim); font-style:italic; margin:14px 0 0; font-size:14px}
+.ending-line{color:var(--ink); font-size:17px; margin:0 0 10px}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; font-size:13px; margin-bottom:16px}
+.panel-title{color:var(--dim); letter-spacing:.2em; margin-bottom:10px; font-size:11px}
+.panel-item{color:var(--ink); padding:4px 0; border-top:1px solid var(--line); line-height:1.6}
+.clock{color:var(--dim); font-size:12px; text-align:center; letter-spacing:.2em}
+.title-bar{display:flex; align-items:center; gap:12px; min-height:20px; margin:-6px 0 16px; font-size:12px}
+.btn.small{padding:6px 12px; font-size:12px}
+.save-hint{color:var(--dim); font-style:italic}
+.title-screen{padding:30px 4px; text-align:center}
+.title-line{color:var(--warm); font-size:18px; letter-spacing:.08em; margin:0 0 10px}
+.title-sub{color:var(--dim); font-size:14px; margin:0 0 22px}
+.title-actions{display:flex; gap:14px; justify-content:center}
+.companion{background:#11141a; border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:14px; font-style:italic; color:var(--dim); margin-bottom:16px; min-height:18px}
+.companion .companion-name{color:var(--warm); font-style:normal; margin-right:8px; font-size:12px; letter-spacing:.1em}
+.companion .companion-line.dim{opacity:.7}
+.region-grid{display:flex; flex-wrap:wrap; gap:12px}
+.region-card{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; cursor:pointer; transition:.2s; min-width:150px}
+.region-card:hover{border-color:var(--warm)}
+.region-name{color:var(--warm); font-size:15px; margin-bottom:6px}
+.region-meta{color:var(--dim); font-size:12px; font-style:italic}
+.examine{margin-top:14px; background:#11141a; border:1px solid var(--line); border-radius:8px; padding:14px 16px}
+.examine-line{color:var(--ink); font-size:15px; margin-bottom:10px}
+.hotspot-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+.btn.hot{text-align:left}
+.btn.hot.hook{border-color:var(--paper); color:var(--paper)}
+.seen-mark{color:var(--warm); margin-left:4px}
+.exits{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+.reveal-gate{margin-top:16px; padding-top:16px; border-top:1px dashed var(--line)}
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="head">逾期之书 <span class="sub">· 夜 A《夹在书里的信》· 单文件验收壳（内联 Godot 同一份地基）</span></div>
+    <div id="title-bar" class="title-bar"></div>
+    <div class="layout">
+      <div class="main">
+        <div id="stage" class="stage"></div>
+        <div id="puzzle" class="puzzle"></div>
+        <div id="actions" class="actions"></div>
+      </div>
+      <aside class="side">
+        <div id="clues" class="panel">线索（空）</div>
+        <div id="memories" class="panel">记忆（空）</div>
+        <div id="companion" class="companion"></div>
+        <div class="clock">距天亮 · 还有很久</div>
+      </aside>
+    </div>
+  </div>
+  <script>const NIGHT_DATA = {"id":"night_a","playerName":"阿迟","title":"夜 A · 夹在书里的信","meta":{"decoy":true,"note":"关系域 decoy，前期读成别人故事，不引到自己身上"},"regions":{"borrowing_desk":{"name":"借阅台","metaphor":"程序性温柔的入口——所有「处理／续借／寄通知」都从这流过","desc":"服务台后的灯拧得很低。一摞书压着本旧登记册，胶水瓶的盖子没拧紧。","exits":[{"label":"去阅览区","to":"reading_room"},{"label":"去书库深处","to":"stacks_deep"},{"label":"去雨夜门廊","to":"rain_porch"}],"hotspots":{"notice_card":{"label":"逾期通知单（写着你名字）","once":"{name}的《夏天》已逾期。落款是你的名字——可你不记得借过这本书。","again":"通知单边角有手改的痕迹，像被人划掉又重写过一遍。","curatorOnce":"（他没解释，只把单子往你这边推了推。）","unlocks":{"id":"c_name","text":"一张你从没借过的书，写着你的名字"}},"drawer_note":{"label":"抽屉里的空白便签（笔就在手边）","hook":true,"hookPrompt":"服务台抽屉里有一张空白便签和一支笔。你要写点什么吗？","once":"服务台抽屉里压着一张空白便签。笔就在手边，像有人等你写点什么。","again":"便签还在原处。要不要写，你犹豫着。","curatorOnce":"「要写吗？」他擦着台面，「不写也行。」","options":[{"id":"truth","label":"写一句真话（如「其实我很想你」）"},{"id":"safe","label":"写一句安全的话（如「最近还好吗」）"},{"id":"none","label":"什么都不写，直接送信箱"}],"hookResults":{"truth":{"form":"便签被压在抽屉最上层、抚平","line":"「这句……我替你收着。」他把它压在抽屉最上层。","clue":{"id":"c_note","text":"便签写下一句真话，被压在抽屉最上层、抚平"}},"safe":{"form":"便签夹进登记册，位置中性","line":"「这样也行。」他把它夹进登记册，不偏不倚。","clue":{"id":"c_note","text":"便签写下一句安全的话，夹进登记册"}},"none":{"form":"管理员替你贴了「未署名」标签，仍收着","line":"「不写也行。」他替你贴了张未署名标签，收进抽屉。","clue":{"id":"c_note","text":"便签什么都没写，管理员替你贴「未署名」标签收着"}}}},"lost_found":{"label":"失物招领信箱","once":"信箱吞过很多没说出口的东西。你把表达替换成处理，它就很满意。","curatorOnce":"「这里最省事。」他说，像在说给自己听。"},"glue_register":{"label":"胶水与登记册","once":"登记册上你的名字被描过很多遍，墨迹一圈圈晕开，像有人总也写不顺。","curatorOnce":"「借书的人，常来。」他顿了顿，「……常来还，也常还不上。」","unlocks":{"id":"c_sign","text":"你的名字在登记册上被反复描过，墨迹发毛"}},"return_box":{"label":"归还箱","once":"箱子张着口。书放进去，它亮一下「已归还」，可等你转身，书又回到你手里。","again":"归还箱还开着一道缝，像在等你把它真正还掉。","curatorOnce":"「不急。」他隔着台面看你，「有些书，得先想清楚再还。」"}}},"reading_room":{"name":"阅览区","metaphor":"被允许的旁观位——坐在这看「别人的故事」，是你最会的姿势","desc":"一排排座位空着。坐在这看「别人的故事」，是你最会的保护自己的方式。","exits":[{"label":"去借阅台","to":"borrowing_desk"},{"label":"去书库深处","to":"stacks_deep"},{"label":"去雨夜门廊","to":"rain_porch"}],"hotspots":{"old_lamp":{"label":"一盏旧灯","once":"这盏灯为什么一直亮着？","again":"灯还亮着。和刚才一样。","ask":{"prompt":"谁？","then":"忘了。"},"curatorOnce":"「因为以前有人怕黑。」","curatorAgain":"「……忘了。」其实他说的是自己。","unlocks":{"id":"c_lamp","text":"灯一直亮着——因为以前有人怕黑"}},"seats":{"label":"你常坐的读者座位","once":"你常坐的这个位子，椅背上搭着一块除尘布，像有人记得你坐哪儿。","curatorOnce":"「你总坐这儿。」他说，「我留着布，省得落灰。」"},"album_shelf":{"label":"相册书目区（翻得最旧的一本）","once":"一栏相册书里，有本翻得最旧，停在年夜饭那页——你常坐的位子空着。","again":"那本相册书被挪到了「待你再来看」的架位，正对着你。","curatorOnce":"「这本，你翻得最久。」他把它摆到架位最显眼处。","unlocks":{"id":"c_album","text":"相册书停在年夜饭那页，你常坐的位子空着（伏笔）"}}}},"stacks_deep":{"name":"书库深处","metaphor":"漏雨的裂缝——情绪裂缝的具象，旧事书与旧盆都藏在这","desc":"书库最里头漏雨，地上摆着个旧搪瓷盆接水。雨声在这儿格外清楚。","exits":[{"label":"去借阅台","to":"borrowing_desk"},{"label":"去阅览区","to":"reading_room"},{"label":"去雨夜门廊","to":"rain_porch"}],"hotspots":{"letter":{"label":"夹在书里的信（无署名）","once":"一本书里夹着封信，没署名。开头写：「如果你看到这封，说明我终于敢写了。」","again":"信纸边角有咖啡渍，字迹越看越像你自己的——可你只当是巧合。","curatorOnce":"「别人的事，你倒肯认真。」他轻笑，没戳破。","unlocks":{"id":"c_letter","text":"信是写给「楼上一直没搬走的人」，从未寄出"}},"ink_blur":{"label":"借书卡边缘的墨团（词：下次）","once":"借书卡边缘被人反复描过一个词：下次。一笔一画，像在跟自己保证什么。","again":"那个「下次」被描得发亮，墨迹叠着墨迹。","curatorOnce":"「他总说下次。」管理员低头，「下次，下次，就逾期到现在。」","unlocks":{"id":"c_next","text":"借书卡边缘被反复描过「下次」——你一直在对自己说下次"}},"umbrella_share":{"label":"另一本书里也夹着一把伞","once":"另一本书里夹着一把伞——和你忘在门廊那把一样。不同的书，相同的伞。","curatorOnce":"「忘带伞的人，不止你一个。」","unlocks":{"id":"c_umb2","text":"不同的「别人」的书里，都夹着同一把伞"}}}},"rain_porch":{"name":"雨夜门廊","metaphor":"进出的阈限——伞、门、来去都在此，是逃避与返回的边界","desc":"玻璃门外雨下得直。门是进来的地方，也是回去的地方。","exits":[{"label":"去借阅台","to":"borrowing_desk"},{"label":"去阅览区","to":"reading_room"},{"label":"去书库深处","to":"stacks_deep"}],"hotspots":{"umbrella":{"label":"你忘在门廊的伞","once":"你的伞靠在门边，伞尖还在滴水。你进来时忘了它，像忘了很多次自己。","again":"伞还靠在原处，湿痕没干。","curatorOnce":"「又忘了？」他没笑，「门廊留着你的伞，第几次了。」","unlocks":{"id":"c_umb1","text":"你又忘带伞——门廊留着你的伞"}},"door":{"label":"门（没锁）","once":"门没锁。推开门是雨，关上是馆。你站在门槛上，两边都不是答案。","again":"门还是那样，没锁。你没推。","curatorOnce":"（他没拦你，也没催你走。）"},"lamp_behind":{"label":"身后的灯（常亮）","once":"你回头，馆里的灯亮着。它从不熄灭——像有谁舍不得让你摸黑走。","curatorOnce":"「灯亮着，你回头就能看见路。」","unlocks":{"id":"c_lamp2","text":"灯从不熄灭——像有谁舍不得让你摸黑走"}}}}},"nodes":{"notice":{"stage":"逾期通知 · 午夜送达\n\n{name}的《夏天》已逾期。请于今夜闭馆前归还。\n逾期不息，灯不灭。\n\n—— 一张你从没借过的书，为什么是你的名字。","actions":[{"id":"read","label":"弯腰捡起，读完整张通知","primary":true},{"id":"toss","label":"先揉成一团——最后还是展平了"}]},"enter":{"stage":"雨在馆外下。推门时，白噪音被木门切断，只剩雨声从门缝漏进来。灯还亮着。管理员在柜台后，没抬头：「又来了。」TA 把一盏台灯往你这边挪了挪，像是给一个熟客留的位置。","actions":[{"id":"desk","label":"走近柜台","primary":true},{"id":"door","label":"先在门口站一会儿，听雨"}]}},"reveal":{"requiresClues":["c_letter","c_name"],"stage":"灯下你把碎片拼完：信是你写的，写给楼上那个一直没搬走的人——一个你暗恋过、却从没敢搭话的邻居。日期是你不记得的一天。它从未寄出，也从未被还。你松了口气，像帮一个陌生人，轻轻合上了他迟到了很多年的心事。\n\n（灯还亮着。你没觉得那笔迹眼熟得过分。）","actions":[{"id":"to_ending","label":"合上书，做最后的决定 ▶","primary":true}]},"ending":{"defaultStage":"现在你知道了：《夏天》该回到它那一格，你也想起那封没寄出的信。要怎么处置它，是你自己的事了。","defaultActions":[{"id":"end:return","label":"归还 · 放回它该在的那一格","primary":true},{"id":"end:take","label":"带走 · 悄悄塞进外套内袋"},{"id":"end:burn","label":"销毁 · 在灯下一页页撕碎"}],"endings":{"return":"你把《夏天》放回它该在的那一格。屏幕安静地亮起「已归还」。这次，它没有再回来。你松了手。","take":"你把它塞进外套内袋。走出馆门时雨还在下，书贴着心口，有点沉，也有点暖。","burn":"你在灯下把它一页页撕开，丢进还书台旁的碎纸口。碎片落下去时，像一声很轻的叹气。"}},"companion":{"enter:notice":"（通知单从门缝塞进来，像往常一样。）","enter:enter":"「又来了。」他没抬头，把一盏台灯往你这边挪了挪。","enter:borrowing_desk":"「台面刚擦过。」他指了指那摞书，「这本，压得最久。」","enter:reading_room":"「你总坐那边的位子。」他说，像在说一件理所当然的事。","enter:stacks_deep":"「漏雨那处，我接了盆。」他指了指地上，「还没补。」","enter:rain_porch":"「门廊留着你的伞。」他站在柜台后，没跟出来。","hot:borrowing_desk:return_box":"「不急。」他隔着台面看你，「有些书，得先想清楚再还。」","hot:stacks_deep:letter":"「别人的事，你倒肯认真。」他轻笑，没戳破。"},"memories":{"m_forgot":"被遗忘的事：你写过一封没寄出的信，收信人是你一直没敢联系的人"}};</script>
+  <script>
+(function (global) {
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  const SAVE_KEY = 'overdue-book:save';
+  const Game = {
+    night: null, state: null, name: '阿迟', els: {},
+    save() {
+      if (typeof localStorage === 'undefined') return false;
+      try {
+        const s = this.state;
+        const data = { night: this.night ? this.night.id : null, node: s.node,
+          currentRegion: s.currentRegion, clues: s.clues, memories: s.memories,
+          visitedHot: s.visitedHot, examined: s.examined, hookChosenLine: s.hookChosenLine,
+          asking: s.asking, endingText: s.endingText, ts: Date.now() };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+        return true;
+      } catch (e) { console.warn('[save] 写入失败', e); return false; }
+    },
+    load() {
+      if (typeof localStorage === 'undefined') return false;
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (this.night && data.night && data.night !== this.night.id) return false;
+        this.state = Object.assign(this._freshState(), data);
+        return true;
+      } catch (e) { return false; }
+    },
+    hasSave() {
+      if (typeof localStorage === 'undefined') return false;
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (this.night && data.night && data.night !== this.night.id) return false;
+        return true;
+      } catch (e) { return false; }
+    },
+    clearSave() {
+      if (typeof localStorage === 'undefined') return;
+      try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    },
+    _freshState() {
+      return { node:'notice', currentRegion:'', clues:{}, memories:{}, visitedHot:{},
+        examined:{}, hookChosenLine:{}, asking:{}, curator:'', endingText:'' };
+    },
+    start(night, mode) {
+      this.night = night; this.name = night.playerName || '阿迟';
+      if (typeof document !== 'undefined') { this.cache(); this.bind(); }
+      const canContinue = this.hasSave();
+      if (mode === 'continue' && canContinue) { this.load(); }
+      else if (mode === 'new') { this.state = this._freshState(); this.clearSave(); }
+      else if (canContinue) { this.state = this._freshState(); this._showTitle(); return; }
+      else { this.state = this._freshState(); }
+      if (this.state.node !== 'hub' && this.state.node !== 'region') { this._companion('enter:' + this.state.node); }
+      else if (this.state.node === 'region' && this.state.currentRegion) { this._companion('enter:' + this.state.currentRegion); }
+      this.render();
+    },
+    _showTitle() {
+      const el = this.els.stage; if (!el) return;
+      el.innerHTML = '<div class="title-screen">' +
+        '<p class="title-line">《逾期之书》· ' + esc(this.night.title || '夜 A') + '</p>' +
+        '<p class="title-sub">检测到上次未走完的一夜。</p>' +
+        '<div class="title-actions">' +
+          '<button class="btn primary" data-act="__continue">继续上次 ▶</button>' +
+          '<button class="btn" data-act="__newgame">从头开始 ↺</button>' +
+        '</div></div>';
+      this.els.actions.innerHTML = ''; this.els.puzzle.innerHTML = ''; this.els.regionMap.innerHTML = '';
+      this.renderClues(); this.renderMemories(); this.renderCompanion(); this._renderTitleBar();
+    },
+    _renderTitleBar() {
+      const el = this.els.titleBar; if (!el) return;
+      el.innerHTML = '<button class="btn small ghost" data-act="__save">保存进度</button>' +
+        '<span class="save-hint" id="save-hint"></span>';
+    },
+    cache() {
+      this.els.stage = document.getElementById('stage');
+      this.els.puzzle = document.getElementById('puzzle');
+      this.els.actions = document.getElementById('actions');
+      this.els.clues = document.getElementById('clues');
+      this.els.memories = document.getElementById('memories');
+      this.els.companion = document.getElementById('companion');
+      this.els.regionMap = document.getElementById('region-map');
+      this.els.titleBar = document.getElementById('title-bar');
+    },
+    bind() {
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-act]');
+        if (!btn || btn.disabled) return;
+        const act = btn.getAttribute('data-act');
+        if (act === '__continue') { this.start(this.night, 'continue'); return; }
+        if (act === '__new_game') { this.clearSave(); this.start(this.night, 'new'); return; }
+        if (act === '__save') { this._doSave(); return; }
+        if (act.startsWith('pz:')) { this._onHookChoice(act.slice(3)); return; }
+        this.act(act);
+      });
+    },
+    _doSave() {
+      const ok = this.save();
+      const hint = document.getElementById('save-hint');
+      if (hint) {
+        hint.textContent = ok ? '（进度已存 · ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) + '）' : '（当前环境无法存档）';
+        setTimeout(() => { if (hint) hint.textContent = ''; }, 2500);
+      }
+      this._renderTitleBar();
+    },
+    _autoSave() {
+      if (this.state.node === 'notice' && !this.state.currentRegion && Object.keys(this.state.clues).length === 0) return;
+      this.save();
+    },
+    _companion(event) {
+      const comp = this.night.companion; let text = null;
+      if (comp && comp[event]) text = comp[event];
+      if (text) { this.state.curator = text; this.state.curatorShown = true; }
+    },
+    companion(text) { if (text) { this.state.curator = text; this.state.curatorShown = true; } },
+    act(id) {
+      if (id.startsWith('goto:')) {
+        const rid = id.slice(5); this.state.currentRegion = rid; this.state.node = 'region';
+        this._companion('enter:' + rid); this.render(); return;
+      }
+      if (id.startsWith('hot:')) {
+        const parts = id.slice(4).split(':');
+        const rid = parts[0], hid = parts[1]; const key = rid + ':' + hid;
+        const first = !this.state.examined[key];
+        this.state.examining = { region: rid, hot: hid };
+        const hot = this._hot(rid, hid);
+        if (hot && hot.hook && this.state.hookChosenLine[hid]) { this.companion(this.state.hookChosenLine[hid]); this.render(); return; }
+        if (hot && hot.unlocks) { const u = hot.unlocks; if (u.id) this.state.clues[u.id] = u.text; }
+        if (hot && (hot.curatorOnce || hot.curatorAgain)) {
+          const line = (first ? hot.curatorOnce : (hot.curatorAgain || hot.curatorOnce));
+          if (line) this.companion(line);
+        } else { this._companion('hot:' + rid + ':' + hid); }
+        this.state.examined[key] = true; this.state.visitedHot[key] = true; this.render(); return;
+      }
+      if (id.startsWith('ask:')) {
+        const ex = this.state.examining; const rid = ex ? ex.region : null; const hid = ex ? ex.hot : null;
+        const hot = rid ? this._hot(rid, hid) : null;
+        if (hot && hot.ask) { this.companion(hot.ask.then || '……'); this.state.asking[rid + ':' + hid] = true; }
+        this.render(); return;
+      }
+      this._nodeAction(id); this._autoSave(); this.render();
+    },
+    _nodeAction(id) {
+      const s = this.state;
+      switch (id) {
+        case 'read': case 'toss': s.node = 'enter'; break;
+        case 'desk': case 'door': s.node = 'hub'; s.currentRegion = 'borrowing_desk'; break;
+        case 'to_reveal': s.node = 'reveal'; this._unlockMemories(); break;
+        case 'to_ending': s.node = 'ending'; break;
+        case 'end:return': case 'end:take': case 'end:burn': {
+          const key = id.slice(4); s.endingText = this.night.ending.endings[key] || ''; s.node = 'ending'; break;
+        }
+        case 'restart': this.clearSave(); this.start(this.night, 'new'); return;
+      }
+    },
+    _unlockMemories() { const mem = this.night.memories; if (mem) for (const k in mem) this.state.memories[k] = mem[k]; },
+    _hot(region, hotId) {
+      const r = this.night.regions && this.night.regions[region];
+      if (!r || !r.hotspots) return null; return r.hotspots[hotId] || null;
+    },
+    _onHookChoice(optId) {
+      const ex = this.state.examining; if (!ex) return;
+      const hot = this._hot(ex.region, ex.hot); if (!hot || !hot.hook) return;
+      const res = hot.hookResults && hot.hookResults[optId]; if (!res) return;
+      this.state.hookChosenLine[ex.hot] = res.line || '';
+      if (res.clue && res.clue.id) this.state.clues[res.clue.id] = res.clue.text;
+      this.companion(res.line || ''); this.state.node = 'region'; this._autoSave(); this.render();
+    },
+    render() {
+      if (typeof document === 'undefined') return;
+      const node = this.state.node;
+      if (node === 'hub') return this.renderRegionMap();
+      if (node === 'region') return this.renderRegionInterior();
+      return this.renderContentNode(node);
+    },
+    renderContentNode(node) {
+      const nodes = this.night.nodes; if (!nodes || !nodes[node]) return;
+      const nd = nodes[node];
+      const fill = (s) => (s == null ? '' : String(s).split('{name}').join(this.name));
+      this.els.stage.innerHTML = '<div class="content-node">' + esc(fill(nd.stage)) + '</div>';
+      this.els.actions.innerHTML = (nd.actions || []).map((b) =>
+        '<button class="btn ' + (b.primary ? 'primary' : '') + '" data-act="' + esc(b.id) + '">' + esc(b.label) + '</button>').join('');
+      this.els.puzzle.innerHTML = ''; this.els.regionMap.innerHTML = '';
+      this._companion('enter:' + node);
+      if (node === 'ending') this.companion('（这是你自己的事了。）');
+      this.renderClues(); this.renderMemories(); this.renderCompanion();
+    },
+    renderRegionMap() {
+      const regions = this.night.regions || {}; const self = this;
+      const cards = Object.keys(regions).map((rid) => {
+        const r = regions[rid];
+        const meta = r.metaphor ? '<div class="region-meta">' + esc(r.metaphor) + '</div>' : '';
+        return '<div class="region-card" data-act="goto:' + rid + '"><div class="region-name">' + esc(r.name) + '</div>' + meta + '</div>';
+      }).join('');
+      this.els.stage.innerHTML = '<p class="hub-hint">馆里很静。雨声贴着玻璃。你可以去各处看看——每一处都摊着一点关于这本书的线索，拼齐了，才知道它该回哪儿。</p><div class="region-grid">' + cards + '</div>';
+      this.els.actions.innerHTML = '<button class="btn" data-act="goto:borrowing_desk">进入所选区域 ▶</button>';
+      this.els.puzzle.innerHTML = ''; this.els.regionMap.innerHTML = '';
+      this.renderClues(); this.renderMemories(); this.renderCompanion();
+    },
+    renderRegionInterior() {
+      const rid = this.state.currentRegion; const r = this.night.regions[rid]; const self = this;
+      if (!r) { this.els.stage.innerHTML = '<p class="narration">这里什么都没有。</p>'; return; }
+      let html = '<h3 class="scene-name">' + esc(r.name) + '</h3>';
+      if (r.metaphor) html += '<div class="region-meta">' + esc(r.metaphor) + '</div>';
+      html += '<p class="narration">' + esc(r.desc || '') + '</p>';
+      if (this.state.examining && this.state.examining.region === rid) {
+        const hot = this._hot(rid, this.state.examining.hot);
+        if (hot) {
+          const key = rid + ':' + hot.id; const first = !this.state.examined[key];
+          const line = (first ? hot.once : (hot.again || hot.once)) || '';
+          html += '<div class="examine"><div class="examine-line">' + esc(line) + '</div>';
+          if (hot.ask && !this.state.asking[key]) {
+            html += '<button class="btn ghost small" data-act="ask:' + rid + ':' + hot.id + '">' + esc(hot.ask.prompt) + '</button>';
+          }
+          html += '<button class="btn ghost small" data-act="close">收起来</button></div>';
+        }
+      }
+      const hots = Object.keys(r.hotspots || {}).map((hid) => {
+        const h = r.hotspots[hid];
+        const seen = self.state.visitedHot[rid + ':' + hid];
+        const mark = seen ? ' <span class="seen-mark">✓</span>' : '';
+        return '<button class="btn hot' + (h.hook ? ' hook' : '') + '" data-act="hot:' + rid + ':' + hid + '">' + esc(h.label) + mark + '</button>';
+      }).join('');
+      if (hots) html += '<div class="hotspot-row">' + hots + '</div>';
+      const exits = (r.exits || []).map((e) => '<button class="btn exit" data-act="goto:' + e.to + '">' + esc(e.label) + ' →</button>').join('');
+      if (exits) html += '<div class="exits">' + exits + '</div>';
+      const revealBtn = this._revealButton();
+      if (revealBtn) html += '<div class="reveal-gate">' + revealBtn + '</div>';
+      this.els.stage.innerHTML = html;
+      this.els.actions.innerHTML = '<button class="btn" data-act="hub">回到区域图 ▶</button>';
+      const hot = this.state.examining ? this._hot(rid, this.state.examining.hot) : null;
+      if (hot && hot.hook) { this.els.puzzle.innerHTML = this._renderHook(hot); } else { this.els.puzzle.innerHTML = ''; }
+      this.renderClues(); this.renderMemories(); this.renderCompanion(); this.els.regionMap.innerHTML = '';
+    },
+    _revealButton() {
+      const rv = this.night.reveal; if (!rv || !rv.requiresClues) return '';
+      const ok = rv.requiresClues.every((cid) => this.state.clues[cid]);
+      if (!ok) return '';
+      return '<button class="btn primary" data-act="to_reveal">（碎片已凑齐）拼合那一夜 ▶</button>';
+    },
+    _renderHook(hot) {
+      const prompt = hot.hookPrompt || '你要写点什么吗？';
+      let html = '<div class="pz"><p class="pz-prompt">' + esc(prompt) + '</p>';
+      html += (hot.options || []).map((o) => '<button class="btn" data-act="pz:' + esc(o.id) + '">' + esc(o.label) + '</button>').join('');
+      html += '<button class="btn ghost small" data-act="goto:' + this.state.currentRegion + '">（什么都不写，退回去）</button></div>';
+      return html;
+    },
+    renderClues() {
+      const el = this.els.clues; if (!el) return;
+      const ids = Object.keys(this.state.clues);
+      if (!ids.length) { el.innerHTML = '<div class="panel-title">线索（空）</div>'; return; }
+      el.innerHTML = '<div class="panel-title">线索</div>' + ids.map((id) => '<div class="panel-item">· ' + esc(this.state.clues[id]) + '</div>').join('');
+    },
+    renderMemories() {
+      const el = this.els.memories; if (!el) return;
+      const ids = Object.keys(this.state.memories);
+      if (!ids.length) { el.innerHTML = '<div class="panel-title">记忆（空）</div>'; return; }
+      el.innerHTML = '<div class="panel-title">记忆</div>' + ids.map((id) => '<div class="panel-item">· ' + esc(this.state.memories[id]) + '</div>').join('');
+    },
+    renderCompanion() {
+      const el = this.els.companion; if (!el) return;
+      const text = this.state.curator;
+      if (!text) { el.innerHTML = '<span class="companion-name">管理员</span><span class="companion-line dim">（在柜台后，没抬头）</span>'; return; }
+      el.innerHTML = '<span class="companion-name">管理员</span><span class="companion-line">' + esc(text) + '</span>';
+    },
+  };
+  global.Game = Game;
+  global.NIGHT_DATA = {"id":"night_a","playerName":"阿迟","title":"夜 A · 夹在书里的信","meta":{"decoy":true,"note":"关系域 decoy，前期读成别人故事，不引到自己身上"},"regions":{"borrowing_desk":{"name":"借阅台","metaphor":"程序性温柔的入口——所有「处理／续借／寄通知」都从这流过","desc":"服务台后的灯拧得很低。一摞书压着本旧登记册，胶水瓶的盖子没拧紧。","exits":[{"label":"去阅览区","to":"reading_room"},{"label":"去书库深处","to":"stacks_deep"},{"label":"去雨夜门廊","to":"rain_porch"}],"hotspots":{"notice_card":{"label":"逾期通知单（写着你名字）","once":"{name}的《夏天》已逾期。落款是你的名字——可你不记得借过这本书。","again":"通知单边角有手改的痕迹，像被人划掉又重写过一遍。","curatorOnce":"（他没解释，只把单子往你这边推了推。）","unlocks":{"id":"c_name","text":"一张你从没借过的书，写着你的名字"}},"drawer_note":{"label":"抽屉里的空白便签（笔就在手边）","hook":true,"hookPrompt":"服务台抽屉里有一张空白便签和一支笔。你要写点什么吗？","once":"服务台抽屉里压着一张空白便签。笔就在手边，像有人等你写点什么。","again":"便签还在原处。要不要写，你犹豫着。","curatorOnce":"「要写吗？」他擦着台面，「不写也行。」","options":[{"id":"truth","label":"写一句真话（如「其实我很想你」）"},{"id":"safe","label":"写一句安全的话（如「最近还好吗」）"},{"id":"none","label":"什么都不写，直接送信箱"}],"hookResults":{"truth":{"form":"便签被压在抽屉最上层、抚平","line":"「这句……我替你收着。」他把它压在抽屉最上层。","clue":{"id":"c_note","text":"便签写下一句真话，被压在抽屉最上层、抚平"}},"safe":{"form":"便签夹进登记册，位置中性","line":"「这样也行。」他把它夹进登记册，不偏不倚。","clue":{"id":"c_note","text":"便签写下一句安全的话，夹进登记册"}},"none":{"form":"管理员替你贴了「未署名」标签，仍收着","line":"「不写也行。」他替你贴了张未署名标签，收进抽屉。","clue":{"id":"c_note","text":"便签什么都没写，管理员替你贴「未署名」标签收着"}}}},"lost_found":{"label":"失物招领信箱","once":"信箱吞过很多没说出口的东西。你把表达替换成处理，它就很满意。","curatorOnce":"「这里最省事。」他说，像在说给自己听。"},"glue_register":{"label":"胶水与登记册","once":"登记册上你的名字被描过很多遍，墨迹一圈圈晕开，像有人总也写不顺。","curatorOnce":"「借书的人，常来。」他顿了顿，「……常来还，也常还不上。」","unlocks":{"id":"c_sign","text":"你的名字在登记册上被反复描过，墨迹发毛"}},"return_box":{"label":"归还箱","once":"箱子张着口。书放进去，它亮一下「已归还」，可等你转身，书又回到你手里。","again":"归还箱还开着一道缝，像在等你把它真正还掉。","curatorOnce":"「不急。」他隔着台面看你，「有些书，得先想清楚再还。」"}}},"reading_room":{"name":"阅览区","metaphor":"被允许的旁观位——坐在这看「别人的故事」，是你最会的姿势","desc":"一排排座位空着。坐在这看「别人的故事」，是你最会的保护自己的方式。","exits":[{"label":"去借阅台","to":"borrowing_desk"},{"label":"去书库深处","to":"stacks_deep"},{"label":"去雨夜门廊","to":"rain_porch"}],"hotspots":{"old_lamp":{"label":"一盏旧灯","once":"这盏灯为什么一直亮着？","again":"灯还亮着。和刚才一样。","ask":{"prompt":"谁？","then":"忘了。"},"curatorOnce":"「因为以前有人怕黑。」","curatorAgain":"「……忘了。」其实他说的是自己。","unlocks":{"id":"c_lamp","text":"灯一直亮着——因为以前有人怕黑"}},"seats":{"label":"你常坐的读者座位","once":"你常坐的这个位子，椅背上搭着一块除尘布，像有人记得你坐哪儿。","curatorOnce":"「你总坐这儿。」他说，「我留着布，省得落灰。」"},"album_shelf":{"label":"相册书目区（翻得最旧的一本）","once":"一栏相册书里，有本翻得最旧，停在年夜饭那页——你常坐的位子空着。","again":"那本相册书被挪到了「待你再来看」的架位，正对着你。","curatorOnce":"「这本，你翻得最久。」他把它摆到架位最显眼处。","unlocks":{"id":"c_album","text":"相册书停在年夜饭那页，你常坐的位子空着（伏笔）"}}}},"stacks_deep":{"name":"书库深处","metaphor":"漏雨的裂缝——情绪裂缝的具象，旧事书与旧盆都藏在这","desc":"书库最里头漏雨，地上摆着个旧搪瓷盆接水。雨声在这儿格外清楚。","exits":[{"label":"去借阅台","to":"borrowing_desk"},{"label":"去阅览区","to":"reading_room"},{"label":"去雨夜门廊","to":"rain_porch"}],"hotspots":{"letter":{"label":"夹在书里的信（无署名）","once":"一本书里夹着封信，没署名。开头写：「如果你看到这封，说明我终于敢写了。」","again":"信纸边角有咖啡渍，字迹越看越像你自己的——可你只当是巧合。","curatorOnce":"「别人的事，你倒肯认真。」他轻笑，没戳破。","unlocks":{"id":"c_letter","text":"信是写给「楼上一直没搬走的人」，从未寄出"}},"ink_blur":{"label":"借书卡边缘的墨团（词：下次）","once":"借书卡边缘被人反复描过一个词：下次。一笔一画，像在跟自己保证什么。","again":"那个「下次」被描得发亮，墨迹叠着墨迹。","curatorOnce":"「他总说下次。」管理员低头，「下次，下次，就逾期到现在。」","unlocks":{"id":"c_next","text":"借书卡边缘被反复描过「下次」——你一直在对自己说下次"}},"umbrella_share":{"label":"另一本书里也夹着一把伞","once":"另一本书里夹着一把伞——和你忘在门廊那把一样。不同的书，相同的伞。","curatorOnce":"「忘带伞的人，不止你一个。」","unlocks":{"id":"c_umb2","text":"不同的「别人」的书里，都夹着同一把伞"}}}},"rain_porch":{"name":"雨夜门廊","metaphor":"进出的阈限——伞、门、来去都在此，是逃避与返回的边界","desc":"玻璃门外雨下得直。门是进来的地方，也是回去的地方。","exits":[{"label":"去借阅台","to":"borrowing_desk"},{"label":"去阅览区","to":"reading_room"},{"label":"去书库深处","to":"stacks_deep"}],"hotspots":{"umbrella":{"label":"你忘在门廊的伞","once":"你的伞靠在门边，伞尖还在滴水。你进来时忘了它，像忘了很多次自己。","again":"伞还靠在原处，湿痕没干。","curatorOnce":"「又忘了？」他没笑，「门廊留着你的伞，第几次了。」","unlocks":{"id":"c_umb1","text":"你又忘带伞——门廊留着你的伞"}},"door":{"label":"门（没锁）","once":"门没锁。推开门是雨，关上是馆。你站在门槛上，两边都不是答案。","again":"门还是那样，没锁。你没推。","curatorOnce":"（他没拦你，也没催你走。）"},"lamp_behind":{"label":"身后的灯（常亮）","once":"你回头，馆里的灯亮着。它从不熄灭——像有谁舍不得让你摸黑走。","curatorOnce":"「灯亮着，你回头就能看见路。」","unlocks":{"id":"c_lamp2","text":"灯从不熄灭——像有谁舍不得让你摸黑走"}}}}},"nodes":{"notice":{"stage":"逾期通知 · 午夜送达\n\n{name}的《夏天》已逾期。请于今夜闭馆前归还。\n逾期不息，灯不灭。\n\n—— 一张你从没借过的书，为什么是你的名字。","actions":[{"id":"read","label":"弯腰捡起，读完整张通知","primary":true},{"id":"toss","label":"先揉成一团——最后还是展平了"}]},"enter":{"stage":"雨在馆外下。推门时，白噪音被木门切断，只剩雨声从门缝漏进来。灯还亮着。管理员在柜台后，没抬头：「又来了。」TA 把一盏台灯往你这边挪了挪，像是给一个熟客留的位置。","actions":[{"id":"desk","label":"走近柜台","primary":true},{"id":"door","label":"先在门口站一会儿，听雨"}]}},"reveal":{"requiresClues":["c_letter","c_name"],"stage":"灯下你把碎片拼完：信是你写的，写给楼上那个一直没搬走的人——一个你暗恋过、却从没敢搭话的邻居。日期是你不记得的一天。它从未寄出，也从未被还。你松了口气，像帮一个陌生人，轻轻合上了他迟到了很多年的心事。\n\n（灯还亮着。你没觉得那笔迹眼熟得过分。）","actions":[{"id":"to_ending","label":"合上书，做最后的决定 ▶","primary":true}]},"ending":{"defaultStage":"现在你知道了：《夏天》该回到它那一格，你也想起那封没寄出的信。要怎么处置它，是你自己的事了。","defaultActions":[{"id":"end:return","label":"归还 · 放回它该在的那一格","primary":true},{"id":"end:take","label":"带走 · 悄悄塞进外套内袋"},{"id":"end:burn","label":"销毁 · 在灯下一页页撕碎"}],"endings":{"return":"你把《夏天》放回它该在的那一格。屏幕安静地亮起「已归还」。这次，它没有再回来。你松了手。","take":"你把它塞进外套内袋。走出馆门时雨还在下，书贴着心口，有点沉，也有点暖。","burn":"你在灯下把它一页页撕开，丢进还书台旁的碎纸口。碎片落下去时，像一声很轻的叹气。"}},"companion":{"enter:notice":"（通知单从门缝塞进来，像往常一样。）","enter:enter":"「又来了。」他没抬头，把一盏台灯往你这边挪了挪。","enter:borrowing_desk":"「台面刚擦过。」他指了指那摞书，「这本，压得最久。」","enter:reading_room":"「你总坐那边的位子。」他说，像在说一件理所当然的事。","enter:stacks_deep":"「漏雨那处，我接了盆。」他指了指地上，「还没补。」","enter:rain_porch":"「门廊留着你的伞。」他站在柜台后，没跟出来。","hot:borrowing_desk:return_box":"「不急。」他隔着台面看你，「有些书，得先想清楚再还。」","hot:stacks_deep:letter":"「别人的事，你倒肯认真。」他轻笑，没戳破。"},"memories":{"m_forgot":"被遗忘的事：你写过一封没寄出的信，收信人是你一直没敢联系的人"}};
+  if (typeof window !== 'undefined') { Game.start(global.NIGHT_DATA); }
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+</body>
+</html>

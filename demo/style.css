@@ -1,0 +1,81 @@
+:root{
+  --bg:#0d0f12; --panel:#16191f; --ink:#e9e3d6; --dim:#9a948a;
+  --warm:#e8b06a; --line:#2a2f37; --paper:#cdbf9a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Noto Serif SC",serif; line-height:1.9; letter-spacing:.02em;
+}
+.frame{max-width:880px; margin:40px auto; padding:0 20px}
+.head{font-size:20px; color:var(--ink); border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:22px}
+.sub{color:var(--dim); font-size:14px; font-weight:400}
+.layout{display:flex; gap:24px; align-items:flex-start}
+.main{flex:1; min-width:0}
+.side{width:210px; flex:none}
+
+.stage{
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:26px 28px; min-height:200px; font-size:16px;
+}
+.narration{margin:0}
+.scene-name{color:var(--warm); font-weight:600; font-size:15px; letter-spacing:.1em; margin:0 0 12px}
+.hub-hint{color:var(--dim); font-style:italic; margin:0 0 16px}
+
+/* 逾期通知卡：等宽、催还单即视感 */
+.notice-card{
+  background:#0a0c0f; border:1px dashed var(--paper); border-radius:8px;
+  padding:22px; font-family:"SFMono-Regular",Consolas,monospace; color:var(--paper);
+}
+.notice-top{font-size:12px; letter-spacing:.3em; color:var(--dim); margin-bottom:14px}
+.notice-body{font-size:15px; line-height:2; white-space:pre-wrap}
+.notice-foot{margin-top:16px; font-size:12px; color:var(--dim); text-align:right}
+
+/* 谜题区（锈湖式解密） */
+.puzzle{margin-top:16px; display:flex; flex-direction:column; gap:10px}
+.pz{background:#11141a; border:1px solid var(--line); border-radius:8px; padding:16px 18px}
+.pz-prompt{margin:0 0 12px; color:var(--ink); font-size:15px}
+.pz-input{
+  background:#0a0c0f; border:1px solid var(--line); color:var(--paper);
+  border-radius:6px; padding:9px 12px; font-family:inherit; font-size:14px; min-width:200px;
+}
+.pz-input:focus{outline:none; border-color:var(--warm)}
+.pz-fb{margin:10px 0 0; color:var(--warm); font-style:italic; font-size:14px}
+.pz-locked{color:var(--dim); font-style:italic; margin:0; font-size:14px}
+
+.actions{margin-top:18px; display:flex; flex-wrap:wrap; gap:12px}
+.btn{
+  background:transparent; color:var(--ink); border:1px solid var(--line);
+  border-radius:8px; padding:10px 18px; font-family:inherit; font-size:14px;
+  cursor:pointer; transition:.2s;
+}
+.btn:hover{border-color:var(--warm); color:var(--warm)}
+.btn.primary{border-color:var(--warm); color:var(--warm)}
+.btn.ghost{color:var(--dim)}
+.btn:disabled{opacity:.4; cursor:default}
+
+.catch{color:var(--warm); font-style:italic; margin-top:18px}
+.curator{color:var(--dim); font-style:italic; margin:14px 0 0; font-size:14px}
+.ending-line{color:var(--ink); font-size:17px; margin:0 0 10px}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; font-size:13px; margin-bottom:16px}
+.panel-title{color:var(--dim); letter-spacing:.2em; margin-bottom:10px; font-size:11px}
+.panel-item{color:var(--ink); padding:4px 0; border-top:1px solid var(--line); line-height:1.6}
+.clock{color:var(--dim); font-size:12px; text-align:center; letter-spacing:.2em}
+
+/* 存档条（B：保存进度 + 状态提示） */
+.title-bar{display:flex; align-items:center; gap:12px; min-height:20px; margin:-6px 0 16px; font-size:12px}
+.btn.small{padding:6px 12px; font-size:12px}
+.btn.ghost{color:var(--dim)}
+.save-hint{color:var(--dim); font-style:italic}
+
+/* 标题屏：检测到未走完的存档时 */
+.title-screen{padding:30px 4px; text-align:center}
+.title-line{color:var(--warm); font-size:18px; letter-spacing:.08em; margin:0 0 10px}
+.title-sub{color:var(--dim); font-size:14px; margin:0 0 22px}
+.title-actions{display:flex; gap:14px; justify-content:center}
+
+/* 管理员常驻对话条 */
+.companion{background:#11141a; border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:14px; font-style:italic; color:var(--dim); margin-bottom:16px; min-height:18px}
+.companion .companion-name{color:var(--warm); font-style:normal; margin-right:8px; font-size:12px; letter-spacing:.1em}
+.companion .companion-line.dim{opacity:.7}

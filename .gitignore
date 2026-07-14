@@ -1,0 +1,18 @@
+# Godot 4+ editor cache (regenerated locally, never commit)
+.godot/
+
+# Godot Mono / .NET build artifacts
+.mono/
+data_*/
+mono_crash.*.json
+
+# Imported translations (auto-generated from CSV)
+*.translation
+
+# Logs
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
