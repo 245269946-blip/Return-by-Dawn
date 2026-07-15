@@ -98,7 +98,57 @@ func _ready() -> void:
 
 func _run_tests() -> void:
 
-	# ════════════════ 0. 开场流 ════════════════
+	# ════════════════ P. 序章 · 续借（教学关） ════════════════
+	# _ready 已加载 NIGHT_ORDER[0] = prologue；此处显式确认并走一遍主链。
+	chk("P0-0 序章为入口夜", main.content["id"] == "prologue")
+	chk("P0-1 notice 上屏(系统重发)", _stage().contains("系统重发"), _stage())
+	main._on_node_action("read")
+	chk("P0-2 read→enter", main.state["node"] == "enter" and _stage().contains("来了"), _stage())
+	_to_enter()
+	main._on_node_action("toss")
+	chk("P0-3 toss→enter", main.state["node"] == "enter")
+	_to_enter()
+	main._on_node_action("desk")
+	chk("P0-4 desk→hub+服务台", main.state["node"] == "hub" and main.state["currentRegion"] == "service_desk")
+	_to_enter()
+	main._on_node_action("door")
+	chk("P0-5 door→hub", main.state["node"] == "hub")
+	# 区域切换 + 进区反应
+	main._on_goto("entry_porch")
+	chk("P0-6 门廊进区反应", _curator().contains("门廊留着你的伞"), _curator())
+	main._on_hotspot("entry_porch", "umbrella")
+	chk("P0-7 c_umb1", "c_umb1" in _clues())
+	main._on_goto("reading_room")
+	chk("P0-8 阅览进区反应", _curator().contains("你总坐那边的位子"), _curator())
+	main._on_hotspot("reading_room", "old_lamp")
+	chk("P0-9 c_lamp", "c_lamp" in _clues())
+	main._on_goto("service_desk")
+	# 通知单 → c_name
+	main._on_hotspot("service_desk", "notice_card")
+	chk("P0-10 c_name(自己逾期通知)", "c_name" in _clues() and _stage().contains("你以为是系统自动重发"), _stage())
+	# 种子：他桌上也压着一摞没还的书
+	main._on_hotspot("service_desk", "desk_stack")
+	chk("P0-11 c_hisbooks 种子", "c_hisbooks" in _clues())
+	# 核心：续借决策 hook（双延后选项）
+	main._on_hotspot("service_desk", "overdue_book")
+	chk("P0-12 续借 hook 提问+选项", _curator().contains("要怎么办") and _actions_has("办续借") and _actions_has("下次吧"), _curator())
+	main._on_hook_choice("service_desk", "overdue_book", _hd("service_desk", "overdue_book"), "renew")
+	chk("P0-13 续借→c_renewed+结算页", "c_renewed" in _clues() and _stage().contains("【结算】"), _stage())
+	main._on_settlement_continue()
+	chk("P0-14 续借→exit 节点", main.state["node"] == "exit" and _stage().contains("续借，登记好了"), _stage())
+	main._on_node_action("to_close")
+	chk("P0-15 收场 curtain", _stage().contains("今夜闭馆"), _stage())
+	chk("P0-16 续接声明 next=night_a", main.content.has("next") and main.content["next"] == "night_a")
+	chk("P0-17 curtain 含「继续」入口", _actions_has("继续"), str(_actions()))
+	# 跨夜续接链路：点「继续」即加载夜 A 开场
+	for c in main.get_node("Panel/Actions").get_children():
+		if c is Button and c.text.contains("继续"):
+			c.pressed.emit()
+			break
+	chk("P0-18 续接后进入 night_a notice", main.content["id"] == "night_a" and main.state["node"] == "notice")
+
+	# ════════════════ 0. 开场流（夜 A） ════════════════
+	main.load_night_by_id("night_a")   # 确保后续断言跑在夜 A 内容上
 	chk("0-1 notice 文案上屏", _stage().contains("未寄出的信"), _stage())
 	main._on_node_action("read")
 	chk("0-2 read→enter", main.state["node"] == "enter" and _stage().contains("又来了"), _stage())

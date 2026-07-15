@@ -36,7 +36,8 @@ const DEBUG_IGNORE_SAVE := true
 # ── 夜程表（框架层 · 内容无关）────────────────────────
 # 加一夜 = 在 content/ 放 night_X.json + 把 id 加进此数组；引擎逻辑零改动。
 # Main 始终加载 NIGHT_ORDER[0]；多夜顺序 / 跨夜选择后续在框架层扩展。
-const NIGHT_ORDER := ["night_a"]
+# 夜序：序章 → 第一幕（夜A…）。加一夜 = 内容 JSON + 此处追加 id；引擎零改其它处。
+const NIGHT_ORDER := ["prologue", "night_a"]
 
 # ── 状态初始化（与 demo 的 _freshState 对齐）──────────────
 func _fresh_state() -> Dictionary:
@@ -75,22 +76,10 @@ func _dev_skip_save() -> bool:
 	return DEBUG_IGNORE_SAVE and OS.is_debug_build()
 
 func _ready() -> void:
-	content = ContentLoader.get_night(NIGHT_ORDER[0])
-	if content.is_empty():
-		push_error("Main: 夜 A 内容为空，检查 content/night_a.json")
-		return
-	# ── F2 跨夜持久进度（LibraryState）地基接线 ──
-	ProgressState.night_index = NIGHT_ORDER.find(NIGHT_ORDER[0])
-	if content.has("regions"):
-		var regs = content["regions"] as Dictionary
-		var unlocked := []
-		for rid in regs.keys():
-			var rg = regs[rid] as Dictionary
-			if not rg.get("locked", false) and not rg.get("void", false):
-				unlocked.append(rid)
-		ProgressState.unlocked_zones = unlocked
 	gui_input.connect(_on_gui_input)
 	_build_ui()
+	# 加载入口夜（NIGHT_ORDER[0]）；引擎与夜程表解耦，加一夜零改此处
+	load_night_by_id(NIGHT_ORDER[0])
 	# 存档恢复（B）：有同版存档则恢复，否则走开场 notice
 	# 版本不匹配或缺失 contentVersion 字段 → 视为过期存档，自动新游戏
 	# 开发期开关：DEBUG_IGNORE_SAVE + debug 构建 → 跳过恢复，直接新游戏
@@ -100,6 +89,29 @@ func _ready() -> void:
 		state = _fresh_state()
 		state["node"] = "notice"
 		_render_node("notice")
+
+## 跨夜加载：引擎与夜程表解耦（加一夜 = 内容 JSON + NIGHT_ORDER 追加 id）
+## 供 _ready 开场与收场「继续」按钮复用；测试桩可显式切换任意一夜。
+func load_night_by_id(id: String) -> void:
+	if not NIGHT_ORDER.has(id):
+		push_error("Main: 夜程表无此夜 " + id)
+		return
+	var c := ContentLoader.get_night(id)
+	if c.is_empty():
+		push_error("Main: 加载夜失败 " + id)
+		return
+	content = c
+	ProgressState.night_index = NIGHT_ORDER.find(id)
+	var unlocked := []
+	var regs = content["regions"] as Dictionary
+	for rid in regs.keys():
+		var rg = regs[rid] as Dictionary
+		if not rg.get("locked", false) and not rg.get("void", false):
+			unlocked.append(rid)
+	ProgressState.unlocked_zones = unlocked
+	state = _fresh_state()
+	state["node"] = "notice"
+	_render_node("notice")
 
 # ── UI 骨架（Godot 专属；与 demo 的 DOM 对应）──────────────
 func _build_ui() -> void:
@@ -673,6 +685,15 @@ func _render_curtain() -> void:
 	_clear_container($Panel/Memories)
 	$Panel/Stage.text = "（今夜闭馆。灯还亮着。）\n\n雨声贴着玻璃，慢慢远了。\n你合上《逾期之书》——可你知道，有些书，合上了也还在原地等你。"
 	$Panel/Curator.text = "（夜还长。下次来，灯还亮着。）"
+	# 跨夜续接：本夜声明 next 且夜程表中有其后继 → 提供「继续」入口
+	if content.has("next"):
+		var nxt: String = content["next"]
+		var cid: String = content.get("id", "")
+		if NIGHT_ORDER.has(nxt) and NIGHT_ORDER.find(nxt) > NIGHT_ORDER.find(cid):
+			var bn := Button.new()
+			bn.text = "继续 —— 下一夜"
+			bn.pressed.connect(load_night_by_id.bind(nxt))
+			$Panel/Actions.add_child(bn)
 	var b := Button.new()
 	b.text = "重新翻开《逾期之书》"
 	b.pressed.connect(_on_restart)

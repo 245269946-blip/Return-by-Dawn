@@ -20,6 +20,7 @@
 | `playerName` | string | 是 | 主角称呼，`{name}` 在全文插值 |
 | `title` | string | 是 | 夜标题 |
 | `meta` | object | 否 | `{ decoy: bool, note: string }` 作者备注，不参与渲染 |
+| `next` | string | 否 | 跨夜续接：声明下一夜 id（须在 `Main.NIGHT_ORDER` 中且夜序靠后）；收场 curtain 提供「继续」入口。最后一夜省略 |
 | `regions` | object | 是 | 区域图，键 = 区域 id |
 | `nodes` | object | 是 | 剧情节点（`notice` / `enter` / 可扩展），键 = 节点 id |
 | `reveal` | object | 否 | 拼合节点（多线索门控） |

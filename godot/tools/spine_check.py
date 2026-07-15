@@ -17,7 +17,8 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONTENT_DIR = os.path.join(BASE, "content")
 
 # 夜程表（顺序即夜序）。新增一夜在此追加即可，引擎侧 Main.NIGHT_ORDER 同步。
-NIGHT_ORDER = ["night_a", "night_b", "night_c", "night_d", "night_e", "night_f"]
+# prologue 为序章（教学关，玩家自己的逾期书），夜序最前，受护栏约束（< 夜D 不得点破自认）。
+NIGHT_ORDER = ["prologue", "night_a", "night_b", "night_c", "night_d", "night_e", "night_f"]
 # 第一夜允许自认揭晓的闸门（夜序 >= 此夜 不再受本护栏约束）。
 SPINE_BREAK_NIGHT = "night_d"
 
@@ -61,7 +62,7 @@ def main():
     total_leaks = 0
 
     for fn in sorted(os.listdir(CONTENT_DIR)):
-        if not fn.startswith("night_") or not fn.endswith(".json"):
+        if not (fn.startswith("night_") or fn.startswith("prologue")) or not fn.endswith(".json"):
             continue
         night_id = fn[:-5]
         if night_id not in NIGHT_ORDER:
