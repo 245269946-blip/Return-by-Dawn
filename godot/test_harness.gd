@@ -102,8 +102,9 @@ func _run_tests() -> void:
 	# _ready 已加载 NIGHT_ORDER[0] = prologue；此处显式确认并走一遍主链。
 	chk("P0-0 序章为入口夜", main.content["id"] == "prologue")
 	chk("P0-1 notice 上屏(系统重发)", _stage().contains("系统重发"), _stage())
+	chk("P0-1b notice 含第一天标记", _stage().contains("第一天"), _stage())
 	main._on_node_action("read")
-	chk("P0-2 read→enter", main.state["node"] == "enter" and _stage().contains("来了"), _stage())
+	chk("P0-2 read→enter", main.state["node"] == "enter" and _stage().contains("没抬头"), _stage())
 	_to_enter()
 	main._on_node_action("toss")
 	chk("P0-3 toss→enter", main.state["node"] == "enter")
@@ -138,6 +139,7 @@ func _run_tests() -> void:
 	chk("P0-14 续借→exit 节点", main.state["node"] == "exit" and _stage().contains("续借，登记好了"), _stage())
 	main._on_node_action("to_close")
 	chk("P0-15 收场 curtain", _stage().contains("今夜闭馆"), _stage())
+	chk("P0-15b 收场过场帧显示夜A frame", _stage().contains("第二天"), _stage())
 	chk("P0-16 续接声明 next=night_a", main.content.has("next") and main.content["next"] == "night_a")
 	chk("P0-17 curtain 含「继续」入口", _actions_has("继续"), str(_actions()))
 	# 跨夜续接链路：点「继续」即加载夜 A 开场
@@ -150,8 +152,9 @@ func _run_tests() -> void:
 	# ════════════════ 0. 开场流（夜 A） ════════════════
 	main.load_night_by_id("night_a")   # 确保后续断言跑在夜 A 内容上
 	chk("0-1 notice 文案上屏", _stage().contains("未寄出的信"), _stage())
+	chk("0-1b notice 含第二天标记", _stage().contains("第二天"), _stage())
 	main._on_node_action("read")
-	chk("0-2 read→enter", main.state["node"] == "enter" and _stage().contains("又来了"), _stage())
+	chk("0-2 read→enter", main.state["node"] == "enter" and _stage().contains("没抬头"), _stage())
 	_to_enter()
 	main._on_node_action("toss")
 	chk("0-3 toss→enter", main.state["node"] == "enter")
@@ -169,7 +172,7 @@ func _run_tests() -> void:
 	chk("1-1 c_name + 叙事上屏", "c_name" in _clues() and _stage().contains("你不记得借过"), _stage())
 	chk("1-1 管理员反应", _curator().contains("他没解释"), _curator())
 	main._on_hotspot("service_desk", "notice_card")
-	chk("1-2 again 不重复解锁", _clues().count("c_name") == 1 and _stage().contains("手改的痕迹"), _stage())
+	chk("1-2 again 不重复解锁", _clues().count("c_name") == 1 and _stage().contains("你依旧想不起借过"), _stage())
 	main._on_hotspot("service_desk", "drawer_note")
 	chk("1-3 便签 hook 提问", _curator().contains("写点什么") and _actions_has("写一句真话"), _curator())
 	main._on_hook_choice("service_desk", "drawer_note", _hd("service_desk", "drawer_note"), "truth")
@@ -351,9 +354,135 @@ func _run_tests() -> void:
 	chk("8-1 存档写入", SaveManager.has_save() and saved.has("clues") and saved.has("currentRegion"), str(saved.keys()))
 	chk("8-1 存档含双clue", saved.get("clues", {}).has("c_name") and saved.get("clues", {}).has("c_letter"))
 
+	# ════════════════ B. 夜 B · 满员的书架（家庭域 decoy · 框架） ════════════════
+	main.load_night_by_id("night_b")
+	chk("B0-0 夜B为家庭域夜", main.content["id"] == "night_b")
+	chk("B0-1 notice 上屏(满员的书架)", _stage().contains("满员的书架"), _stage())
+	chk("B0-1b notice 含第三天标记", _stage().contains("第三天"), _stage())
+	chk("B0-2 系统期面孔(无点破)", not _stage().contains("其实是你") and not _stage().contains("就是你自己") and not _stage().contains("你就是本人"), _stage())
+	main._on_node_action("read")
+	chk("B0-3 read→enter(冷化)", main.state["node"] == "enter" and _stage().contains("没抬头"), _stage())
+	_to_enter()
+	main._on_node_action("toss")
+	chk("B0-4 toss→enter", main.state["node"] == "enter")
+	_to_enter()
+	main._on_node_action("desk")
+	chk("B0-5 desk→hub+服务台", main.state["node"] == "hub" and main.state["currentRegion"] == "service_desk")
+	# 服务台
+	_to_region("service_desk")
+	chk("B1-0 进区反应", _curator().contains("台面刚擦过"), _curator())
+	main._on_hotspot("service_desk", "notice_card")
+	chk("B1-1 c_name", "c_name" in _clues() and _stage().contains("你不记得借过"), _stage())
+	main._on_hotspot("service_desk", "notice_card")
+	chk("B1-2 again 不重复解锁", _clues().count("c_name") == 1 and _stage().contains("你依旧想不起借过"), _stage())
+	main._on_hotspot("service_desk", "shelf_tools")
+	chk("B1-3 c_tools(书立除尘布)", "c_tools" in _clues())
+	# 阅览区：相册书 → closeup → 空位页 c_album
+	main._on_goto("reading_room")
+	chk("B2-0 进区反应", _curator().contains("你总坐那边的位子"), _curator())
+	main._on_hotspot("reading_room", "old_lamp")
+	chk("B2-1 c_lamp", "c_lamp" in _clues())
+	main._on_hotspot("reading_room", "album_shelf")
+	chk("B2-2 进近景(node=closeup)", main.state["node"] == "closeup" and _stage().contains("你把相册书摊开"), _stage())
+	chk("B2-2 近景含退回", _actions_has("退回"), str(_actions()))
+	main._on_closeup_hotspot("reading_room", "album_shelf", "read_empty_seat")
+	chk("B2-3 c_album(近景)", "c_album" in _clues())
+	chk("B2-3 空位结算页", _stage().contains("【结算】") and _stage().contains("年夜饭的空位"), _stage())
+	main._on_settlement_continue()
+	main._on_closeup_back()
+	chk("B2-4 退回区域", main.state["node"] == "region")
+	# 书库深处：镜面/墨团/伞（跨夜同款种子）
+	main._on_goto("stacks_deep")
+	chk("B3-0 进区反应", _curator().contains("漏雨那处"), _curator())
+	main._on_hotspot("stacks_deep", "photo_book")
+	chk("B3-1 c_photo(镜面映射)", "c_photo" in _clues())
+	main._on_hotspot("stacks_deep", "ink_blur")
+	chk("B3-2 c_blur(墨团·下次)", "c_blur" in _clues())
+	main._on_hotspot("stacks_deep", "umbrella_share")
+	chk("B3-3 c_umb2", "c_umb2" in _clues())
+	# 门廊
+	main._on_goto("entry_porch")
+	chk("B4-0 进区反应", _curator().contains("门廊留着你的伞"), _curator())
+	main._on_hotspot("entry_porch", "umbrella")
+	chk("B4-1 c_umb1", "c_umb1" in _clues())
+	main._on_hotspot("entry_porch", "lamp_behind")
+	chk("B4-2 c_lamp2", "c_lamp2" in _clues())
+	# Reveal 门控 c_album + c_name（_to_region 会重置状态，逐段重推）
+	_to_region("service_desk")
+	main._on_hotspot("service_desk", "notice_card")
+	main._refresh_region_controls()
+	chk("B6-1 只c_name→reveal不解锁", !_actions_has("拼合那一夜"))
+	_to_region("reading_room")
+	main._on_hotspot("reading_room", "album_shelf")
+	main._on_closeup_hotspot("reading_room", "album_shelf", "read_empty_seat")
+	main._on_settlement_continue()
+	main._on_closeup_back()
+	main._refresh_region_controls()
+	chk("B6-2 只c_album→reveal不解锁", !_actions_has("拼合那一夜"))
+	_to_region("service_desk")
+	main._on_hotspot("service_desk", "notice_card")
+	main._on_goto("reading_room")
+	main._on_hotspot("reading_room", "album_shelf")
+	main._on_closeup_hotspot("reading_room", "album_shelf", "read_empty_seat")
+	main._on_settlement_continue()
+	main._on_closeup_back()
+	main._refresh_region_controls()
+	chk("B6-3 双clue→reveal解锁", _actions_has("拼合那一夜"), str(_actions()))
+	main._on_enter_reveal()
+	chk("B6-3 reveal 进入", main.state["node"] == "reveal" and _stage().contains("相册书"), _stage())
+	chk("B8-2 reveal 解锁记忆 m_family", main.state["memories"].has("m_family"), str(main.state["memories"]))
+	main._on_node_action("to_utility")
+	chk("B6-4 reveal→便民区(发红包前置)", main.state["node"] == "region" and main.state["currentRegion"] == "utility_zone")
+	# 发红包前：服务台不出现对话入口
+	main._on_goto("service_desk")
+	chk("B7-0 发红包前不出现对话入口", not _hotspots_has("与管理员说话"))
+	# 进便民区发红包（置位 shelvedAlbum）
+	main._on_goto("utility_zone")
+	main._on_hotspot("utility_zone", "lost_found")
+	main._on_closeup_hotspot("utility_zone", "lost_found", "red_packet")
+	var rp = main.content["regions"]["utility_zone"]["hotspots"]["lost_found"]["closeup"]["hotspots"]["red_packet"]
+	main._on_hook_choice("utility_zone", "lost_found", rp, "hesitate", "closeup", "lost_found")
+	chk("B7-1 发红包置位 shelvedAlbum", main.state.get("shelvedAlbum", false))
+	main._on_settlement_continue()
+	main._on_closeup_back()
+	main._on_goto("service_desk")
+	chk("B7-2 发红包后出现对话入口", _hotspots_has("与管理员说话"))
+	main._on_hotspot("service_desk", "talk_librarian")
+	chk("B7-3 对话结算页", _stage().contains("【结算】"), _stage())
+	main._on_settlement_continue()
+	chk("B7-4 出馆节点", main.state["node"] == "exit" and _stage().contains("正式还了"), _stage())
+	main._on_node_action("to_close")
+	chk("B7-5 收场 curtain(夜C未建·无继续)", _stage().contains("今夜闭馆"), _stage())
+	# 夜B 区域出口数（同 §2.2 树边）
+	var b_expect := {
+		"entry_porch": 1, "service_desk": 3, "lounge_stairs": 1,
+		"archive_lamp": 1, "utility_zone": 1, "reading_room": 3,
+		"stacks_deep": 1, "study_zone": 1
+	}
+	var b_exits_ok := true
+	for rid in b_expect.keys():
+		main._on_goto(rid)
+		var nn := 0
+		for t in _actions():
+			if t.ends_with("→"):
+				nn += 1
+		if nn != b_expect[rid]:
+			b_exits_ok = false
+			chk("B5 出口数 (" + rid + ")", false, "期望=" + str(b_expect[rid]) + " 实际=" + str(nn))
+	chk("B5 各区域出口数符合 §2.2 树边", b_exits_ok)
+	chk("B5 void_room 永不开启", not ("void_room" in ProgressState.unlocked_zones))
+	# 常驻「回到服务台」
+	var b_home_ok := true
+	for rid in ["entry_porch","service_desk","reading_room","stacks_deep","study_zone","utility_zone","lounge_stairs","archive_lamp"]:
+		main._on_goto(rid)
+		if not _actions_has("回到服务台"):
+			b_home_ok = false
+			chk("B5b 回服务台(" + rid + ")", false)
+	chk("B5b 八区均常驻「回到服务台」", b_home_ok)
+
 	# ── 汇总 ──
 	print("")
-	print("==== 夜A 点测汇总 ====")
+	print("==== 点测汇总（序章 + 夜A + 夜B）====")
 	print("PASS=%d  FAIL=%d" % [pass_count, fail_count])
 	if fail_count > 0:
 		print("FAILED: " + ", ".join(fails))

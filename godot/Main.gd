@@ -37,7 +37,7 @@ const DEBUG_IGNORE_SAVE := true
 # 加一夜 = 在 content/ 放 night_X.json + 把 id 加进此数组；引擎逻辑零改动。
 # Main 始终加载 NIGHT_ORDER[0]；多夜顺序 / 跨夜选择后续在框架层扩展。
 # 夜序：序章 → 第一幕（夜A…）。加一夜 = 内容 JSON + 此处追加 id；引擎零改其它处。
-const NIGHT_ORDER := ["prologue", "night_a"]
+const NIGHT_ORDER := ["prologue", "night_a", "night_b"]
 
 # ── 状态初始化（与 demo 的 _freshState 对齐）──────────────
 func _fresh_state() -> Dictionary:
@@ -685,11 +685,14 @@ func _render_curtain() -> void:
 	_clear_container($Panel/Memories)
 	$Panel/Stage.text = "（今夜闭馆。灯还亮着。）\n\n雨声贴着玻璃，慢慢远了。\n你合上《逾期之书》——可你知道，有些书，合上了也还在原地等你。"
 	$Panel/Curator.text = "（夜还长。下次来，灯还亮着。）"
-	# 跨夜续接：本夜声明 next 且夜程表中有其后继 → 提供「继续」入口
+	# 过场帧：本夜声明 next 且夜程表有后继 → 在收场页追加下一夜的 frame（区分两天的非对话载体）
 	if content.has("next"):
 		var nxt: String = content["next"]
 		var cid: String = content.get("id", "")
 		if NIGHT_ORDER.has(nxt) and NIGHT_ORDER.find(nxt) > NIGHT_ORDER.find(cid):
+			var nxt_content: Dictionary = ContentLoader.get_night(nxt)
+			if nxt_content.has("frame"):
+				$Panel/Stage.text += "\n\n" + (nxt_content["frame"] as String)
 			var bn := Button.new()
 			bn.text = "继续 —— 下一夜"
 			bn.pressed.connect(load_night_by_id.bind(nxt))
