@@ -11,6 +11,7 @@
     "entry_porch": {
       "name": "雨夜门廊",
       "metaphor": "进出的阈限——伞、门、来去都在此，是逃避与返回的边界",
+      "librarian": false,
       "desc": "玻璃门外雨下得直。门是进来的地方，也是回去的地方。",
       "exits": [
         { "label": "进馆·去服务台", "to": "service_desk" },
@@ -102,6 +103,7 @@
     "reading_room": {
       "name": "阅览区",
       "metaphor": "被允许的旁观位——坐在这看『别人的故事』，是你最会的姿势",
+      "librarian": false,
       "desc": "一排排座位空着。坐在这看『别人的故事』，是你最会的保护自己的方式。",
       "exits": [
         { "label": "回服务台", "to": "service_desk" },

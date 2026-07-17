@@ -15,9 +15,14 @@ var night_index := 0
 var unlocked_zones: Array = []
 var librarian: Dictionary = {}
 var artifacts: Array = []
+# 跨夜携带累加位（框架层 · F2/F3）：上一夜的可携带字段（线索/记忆/物证形态）在此累加，
+# 由 Main._carry_forward() 写入、Main.load_night_by_id() 末尾并入下一夜的 state。
+# 这是「夜与夜真正串联跑动」的地基——autoload 在 load_night_by_id 之间不被销毁，故可跨夜存活。
+var cross_night: Dictionary = {}
 
 func reset() -> void:
 	night_index = 0
 	unlocked_zones = []
 	librarian = {}
 	artifacts = []
+	cross_night = {}

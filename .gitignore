@@ -19,3 +19,12 @@ Thumbs.db
 
 # spine_check 临时输出（生成产物，不入库）
 spine_out.txt
+
+# 生成式测试 / 试玩产物（本地重跑即可再生，不入库）
+_spine_baseline.txt
+godot/harness_out.txt
+godot/playtest_dump_out.txt
+godot/test_out.txt
+godot/test_run.txt
+godot/test_min_out.txt
+godot/tools/_test_out.log

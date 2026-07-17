@@ -15,9 +15,15 @@ extends Control
 ##   asking       : 当前热点是否已追问过
 ##   puzzleCtx    : 钩子上下文 "hook:rid:hid"
 ##   endingText   : 结局正文（用于存档恢复后直接显示）
+##   librarianWhere: 管理员当前所在区域（走动模型；内容用 requiresFlag / moveLibrarian 改变）
 ##
 ## 内容节点（night_a.json 的 "nodes" / "memories" / "companion"）：
 ##   notice / enter / revea / ending 四套剧情节点 + memories 记忆 + companian 常驻反应
+##
+## 界面分区（锈湖式 · 2026-07-16 重排）：
+##   StageArea（中间画面）：场景描述 + 可点物件 + 动作 + 线索/记忆 —— 点击互动都在这里
+##   DialogueBox（底部对话框）：管理员肖像位 + 台词 —— 对话只在这里
+##   管理员「在场」才有肖像与台词；不在场则沉默、肖像隐藏。
 
 var content: Dictionary = {}
 var state: Dictionary = {}
@@ -25,7 +31,7 @@ var state: Dictionary = {}
 # 内容版本号：每次内容数据结构变更时递增。
 # 存档中记录该版本，加载时若不匹配则视为过期存档，自动走新游戏。
 # 这避免了 F5 启动后因旧存档残留直接跳到书库深处等异常状态。
-const CONTENT_VERSION := 2
+const CONTENT_VERSION := 3
 
 # 开发期开关：为 true 且当前为 debug 构建（编辑器内 F5）时，
 # 忽略任何已有存档，永远从 notice 开场，方便反复点测剧情。
@@ -37,7 +43,7 @@ const DEBUG_IGNORE_SAVE := true
 # 加一夜 = 在 content/ 放 night_X.json + 把 id 加进此数组；引擎逻辑零改动。
 # Main 始终加载 NIGHT_ORDER[0]；多夜顺序 / 跨夜选择后续在框架层扩展。
 # 夜序：序章 → 第一幕（夜A…）。加一夜 = 内容 JSON + 此处追加 id；引擎零改其它处。
-const NIGHT_ORDER := ["prologue", "night_a", "night_b"]
+const NIGHT_ORDER := ["prologue", "night_a", "night_b", "night_c", "night_d", "night_e", "night_f", "night_g", "night_h", "night_i", "night_z"]
 
 # ── 状态初始化（与 demo 的 _freshState 对齐）──────────────
 func _fresh_state() -> Dictionary:
@@ -55,6 +61,7 @@ func _fresh_state() -> Dictionary:
 		"endingText": "",
 		"revealSeen": false,
 		"mailedLetter": false,
+		"librarianWhere": "",
 		# 近景 / 结算 瞬时态（不进存档，仅运行期用）
 		"closeup": "",
 		"settlementReturnNode": "",
@@ -106,14 +113,50 @@ func load_night_by_id(id: String) -> void:
 	var regs = content["regions"] as Dictionary
 	for rid in regs.keys():
 		var rg = regs[rid] as Dictionary
-		if not rg.get("locked", false) and not rg.get("void", false):
+		if not rg.get("void", false):
 			unlocked.append(rid)
 	ProgressState.unlocked_zones = unlocked
+	# 管理员初始位置：内容可声明 librarianHome；缺省 service_desk
 	state = _fresh_state()
+	if content.has("librarianHome"):
+		state["librarianWhere"] = content["librarianHome"]
+	elif regs.has("service_desk"):
+		state["librarianWhere"] = "service_desk"
 	state["node"] = "notice"
+	# 跨夜携带：把上一夜经 _carry_forward() 累加进 ProgressState.cross_night 的可携带字段，
+	# 并入本夜 state（线索 / 记忆 / 物证形态 / 已选便签）。这是「夜与夜真正串联」的地基。
+	# 注意：仅并入 cross_night 中已存在的键，不改动本夜引擎自身的初始化。
+	_merge_cross_night()
 	_render_node("notice")
 
-# ── UI 骨架（Godot 专属；与 demo 的 DOM 对应）──────────────
+# ── 跨夜携带（框架层 · F2/F3）────────────────────────
+# 收场「继续 —— 下一夜」点击时调用：把本夜的可携带字段快照进 autoload 的
+# ProgressState.cross_night（累加，不替换），供 load_night_by_id 末尾并入下一夜。
+# 携带字段 = 线索、记忆、已选便签、续借/拼合标记（即「书墙 / 记忆 / 物证形态」跨夜不丢）。
+func _carry_forward() -> void:
+	var cn: Dictionary = ProgressState.cross_night
+	var carry_keys := ["clues", "memories", "hookChosenLine"]
+	for k in carry_keys:
+		if state.has(k) and state[k] is Dictionary:
+			cn[k] = state[k].duplicate()
+	# 标量 / 布尔标记
+	cn["mailedLetter"] = state.get("mailedLetter", false)
+	cn["revealSeen"] = state.get("revealSeen", false)
+
+# load_night_by_id 末尾调用：把 ProgressState.cross_night 中累加的跨夜字段并入本夜 state。
+func _merge_cross_night() -> void:
+	var cn: Dictionary = ProgressState.cross_night
+	if cn.is_empty():
+		return
+	for k in ["clues", "memories", "hookChosenLine"]:
+		if cn.has(k) and cn[k] is Dictionary:
+			var src: Dictionary = cn[k]
+			for ck in src.keys():
+				state[k][ck] = src[ck]
+	if cn.has("mailedLetter"):
+		state["mailedLetter"] = cn["mailedLetter"]
+	if cn.has("revealSeen"):
+		state["revealSeen"] = cn["revealSeen"]
 func _build_ui() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0.05, 0.06, 0.09, 1.0)
@@ -129,37 +172,80 @@ func _build_ui() -> void:
 	panel.offset_bottom = -24.0
 	add_child(panel)
 
+	# ── 中间画面 StageArea：场景描述 + 可点物件 + 动作 + 线索/记忆 ──
+	var stage_area := VBoxContainer.new()
+	stage_area.name = "StageArea"
+	stage_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_child(stage_area)
+
 	var title := Label.new()
 	title.name = "Stage"
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel.add_child(title)
+	stage_area.add_child(title)
 
 	var hot := VBoxContainer.new()
 	hot.name = "Hotspots"
-	panel.add_child(hot)
-
-	var acts := VBoxContainer.new()
-	acts.name = "Actions"
-	panel.add_child(acts)
+	stage_area.add_child(hot)
 
 	var clues := VBoxContainer.new()
 	clues.name = "Clues"
-	panel.add_child(clues)
+	stage_area.add_child(clues)
 
 	var mem := VBoxContainer.new()
 	mem.name = "Memories"
-	panel.add_child(mem)
+	stage_area.add_child(mem)
 
-	var cur := Label.new()
-	cur.name = "Curator"
-	cur.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel.add_child(cur)
+	var acts := VBoxContainer.new()
+	acts.name = "Actions"
+	stage_area.add_child(acts)
 
 	var save_btn := Button.new()
 	save_btn.name = "SaveBtn"
 	save_btn.text = "保存进度 (user://)"
 	save_btn.pressed.connect(_on_save)
-	panel.add_child(save_btn)
+	stage_area.add_child(save_btn)
+
+	# ── 底部对话框 DialogueBox：管理员肖像位 + 台词 ──
+	var box := HBoxContainer.new()
+	box.name = "DialogueBox"
+	box.size_flags_vertical = Control.SIZE_SHRINK_END
+	box.custom_minimum_size = Vector2(0, 150.0)
+	panel.add_child(box)
+
+	var portrait := Panel.new()
+	portrait.name = "Portrait"
+	portrait.visible = false
+	portrait.custom_minimum_size = Vector2(110.0, 0.0)
+	portrait.size_flags_vertical = Control.SIZE_FILL
+	portrait.modulate = Color(0.78, 0.74, 0.62, 1.0)
+	var pl := Label.new()
+	pl.name = "PortraitLabel"
+	pl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	pl.text = "管理员"
+	portrait.add_child(pl)
+	box.add_child(portrait)
+
+	var cur := Label.new()
+	cur.name = "Curator"
+	cur.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cur.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(cur)
+
+# ── 节点访问器（锈湖式双区路径）──────────────────────
+func _stage_node() -> Label:
+	return $Panel/StageArea/Stage
+func _curator_node() -> Label:
+	return $Panel/DialogueBox/Curator
+func _hotspots_node() -> Node:
+	return $Panel/StageArea/Hotspots
+func _actions_node() -> Node:
+	return $Panel/StageArea/Actions
+func _clues_node() -> Node:
+	return $Panel/StageArea/Clues
+func _memories_node() -> Node:
+	return $Panel/StageArea/Memories
 
 func _on_gui_input(_event: InputEvent) -> void:
 	AudioManager.ensure_started()
@@ -182,28 +268,134 @@ func _restore_from_save() -> void:
 	if d.has("hookChosenLine"):state["hookChosenLine"] = d["hookChosenLine"]
 	if d.has("endingText"):    state["endingText"] = d["endingText"]
 	if d.has("revealSeen"):    state["revealSeen"] = d["revealSeen"]
-	if d.has("mailedLetter"):    state["mailedLetter"] = d["mailedLetter"]
+	if d.has("mailedLetter"):  state["mailedLetter"] = d["mailedLetter"]
+	# 管理员位置不进存档（运行期走动态），恢复时回到夜家位
+	if content.has("librarianHome"):
+		state["librarianWhere"] = content["librarianHome"]
+	elif content.get("regions", {}).has("service_desk"):
+		state["librarianWhere"] = "service_desk"
 	# 恢复后直接回到对应节点（跳过开场 notice，避免重复）
 	if state["node"] == "ending":
-		$Panel/Stage.text = state["endingText"]
-		$Panel/Curator.text = "（从上次离开的地方，继续。）"
+		_stage_node().text = state["endingText"]
+		_curator_node().text = "（从上次离开的地方，继续。）"
 		_build_ending_actions()
 	else:
-		$Panel/Curator.text = "（从上次离开的地方，继续。）"
+		_curator_node().text = "（从上次离开的地方，继续。）"
 		_render_node(state["node"])
+	_refresh_portrait()
+
+# ═══════════════ 管理员在场模型（非无处不在 · 2026-07-16）══════════════
+# 管理员是一个会走动的场景人物，不是无处不在的旁白。
+# 每个区域用 regions[rid]["librarian"] 声明他在不在、站在哪个点位：
+#   - 省略            → 在场（兼容旧内容；点位 = rid）
+#   - false / null    → 不在场（无肖像、区域/热点反应沉默）
+#   - "<spot>" 字符串 → 在场，点位 = 该字符串（美术落位提示）
+#   - {spot, requiresFlag} → 仅当 state[requiresFlag] 为真时在场（某阶段才出现）
+# 走动：热点/hook 结果可带 moveLibrarian:"<rid>"，把他移到另一区（置位
+#       librarianArrived:<rid> 标志，配合目标区的 requiresFlag 表达「走了过来」）。
+# 区域/热点反应（enter:<rid> / hot:<rid>:<hid>）仅在管理员在场时触发；
+# 剧情节点反应（enter:<nodeId>）非空间锚定，恒定触发（叙事节拍）。
+
+func _librarian_present(rid: String) -> bool:
+	var regs = content.get("regions", {}) as Dictionary
+	if not regs.has(rid):
+		return false
+	var r = regs[rid] as Dictionary
+	if not r.has("librarian"):
+		return true  # 兼容：省略=在场
+	var cfg = r["librarian"]
+	if cfg == null:
+		return false
+	if cfg is bool:
+		return cfg  # false→不在场；true→在场
+	if cfg is String:
+		return true
+	if cfg is Dictionary:
+		var req = (cfg as Dictionary).get("requiresFlag", "")
+		if req != "" and not state.get(req, false):
+			return false
+		return true
+	return false
+
+func _librarian_spot(rid: String) -> String:
+	var regs = content.get("regions", {}) as Dictionary
+	if not regs.has(rid):
+		return ""
+	var r = regs[rid] as Dictionary
+	if not r.has("librarian"):
+		return rid
+	var cfg = r["librarian"]
+	if cfg is String:
+		return cfg
+	if cfg is Dictionary:
+		return (cfg as Dictionary).get("spot", rid)
+	return rid
+
+func _region_from_event(event: String) -> String:
+	## 从 companion 事件键解析出空间锚定的区域 id（无则返回 ""）
+	var regs = content.get("regions", {}) as Dictionary
+	if event.begins_with("enter:"):
+		var p = event.substr(6)
+		if regs.has(p):
+			return p
+		return ""
+	if event.begins_with("hot:"):
+		var parts = event.split(":")
+		if parts.size() >= 2 and regs.has(parts[1]):
+			return parts[1]
+		return ""
+	if event.begins_with("enter_closeup:"):
+		var p = event.substr(13)
+		var parts = p.split(":")
+		if parts.size() >= 1 and regs.has(parts[0]):
+			return parts[0]
+	return ""
+
+func _refresh_portrait() -> void:
+	## 按当前区域的管理员在场状态，显示/隐藏底部肖像
+	var rid: String = state.get("currentRegion", "")
+	var present := false
+	var spot := ""
+	if rid != "" and _librarian_present(rid):
+		present = true
+		spot = _librarian_spot(rid)
+	_show_portrait(present, spot)
+
+func _show_portrait(visible: bool, spot: String) -> void:
+	var p := $Panel/DialogueBox/Portrait
+	if p == null:
+		return
+	p.visible = visible
+	if visible:
+		var pl := p.get_node("PortraitLabel") as Label
+		if pl != null:
+			pl.text = "管理员\n" + (spot if spot != "" else "在这里")
+
+func _apply_move_librarian(target: String) -> void:
+	if target == "":
+		return
+	state["librarianWhere"] = target
+	state["librarianArrived:" + target] = true
 
 # ── 管理员常驻反应（与 demo 的 _companion 对齐）──────
 func _companion(event: String) -> void:
 	if not content.has("companion"):
 		return
 	var comp = content["companion"] as Dictionary
-	if comp.has(event):
-		state["curator"] = comp[event]
-		$Panel/Curator.text = comp[event]
+	if not comp.has(event):
+		return
+	# 空间锚定事件（进区域 / 点热点）受在场门控：不在场则沉默
+	var rid := _region_from_event(event)
+	if rid != "" and not _librarian_present(rid):
+		return
+	state["curator"] = comp[event]
+	_curator_node().text = comp[event]
+	_refresh_portrait()
 
 func _set_curator(text: String) -> void:
 	state["curator"] = text
-	$Panel/Curator.text = text
+	_curator_node().text = text
+	_refresh_portrait()
 
 # ── 节点渲染调度（与 demo 的 render 对齐）──────────────
 func _render_node(node: String) -> void:
@@ -222,21 +414,22 @@ func _render_content_node(node: String) -> void:
 	if not nodes.has(node):
 		return
 	var nd = nodes[node] as Dictionary
-	$Panel/Stage.text = nd["stage"]
-	_clear_container($Panel/Hotspots)
-	_clear_container($Panel/Clues)
-	_clear_container($Panel/Memories)
+	_stage_node().text = nd["stage"]
+	_clear_container(_hotspots_node())
+	_clear_container(_clues_node())
+	_clear_container(_memories_node())
 	# 动作按钮
-	_clear_container($Panel/Actions)
+	_clear_container(_actions_node())
 	for a in (nd["actions"] as Array):
 		var b := Button.new()
 		b.text = a["label"]
 		b.pressed.connect(_on_node_action.bind(a["id"]))
-		$Panel/Actions.add_child(b)
-	# 进入节点时触发一次管理员反应
+		_actions_node().add_child(b)
+	# 进入节点时触发一次管理员反应（剧情节点非空间锚定，恒定触发）
 	_companion("enter:" + node)
 	if node == "ending":
-		$Panel/Curator.text = "（这是你自己的事了。）"
+		_curator_node().text = "（这是你自己的事了。）"
+	_refresh_portrait()
 
 func _on_node_action(aid: String) -> void:
 	AudioManager.ensure_started()
@@ -260,11 +453,11 @@ func _on_node_action(aid: String) -> void:
 
 # ── 区域图（hub）：可点区域卡（与 demo renderRegionMap 对齐）──
 func _render_region_map() -> void:
-	_clear_container($Panel/Hotspots)
-	_clear_container($Panel/Actions)
-	_clear_container($Panel/Memories)
-	_clear_container($Panel/Clues)
-	$Panel/Stage.text = "馆里很静。雨声贴着玻璃。你可以去各处看看——每一处都摊着一点关于这本书的线索，拼齐了，才知道它该回哪儿。"
+	_clear_container(_hotspots_node())
+	_clear_container(_actions_node())
+	_clear_container(_memories_node())
+	_clear_container(_clues_node())
+	_stage_node().text = "馆里很静。雨声贴着玻璃。你可以去各处看看——每一处都摊着一点关于这本书的线索，拼齐了，才知道它该回哪儿。"
 	var regions = content["regions"] as Dictionary
 	for rid in regions.keys():
 		var r = regions[rid] as Dictionary
@@ -275,17 +468,18 @@ func _render_region_map() -> void:
 		if r.get("locked", false):
 			b.disabled = true
 			b.text = "（门锁着）" + b.text
-			$Panel/Hotspots.add_child(b)
+			_hotspots_node().add_child(b)
 			continue
 		b.pressed.connect(_on_goto.bind(rid))
-		$Panel/Hotspots.add_child(b)
+		_hotspots_node().add_child(b)
 	# 区域图常驻反应（空事件占位）
 	var acts := VBoxContainer.new()
 	acts.name = "toRegion"
 	var bb := Button.new()
 	bb.text = "进入所选区域"
 	bb.pressed.connect(_on_enter_first_region)
-	$Panel/Actions.add_child(bb)
+	_actions_node().add_child(bb)
+	_refresh_portrait()
 
 func _on_enter_first_region() -> void:
 	# 默认先进服务台（也可让玩家先点区域卡）
@@ -310,13 +504,17 @@ func _enter_region(rid: String) -> void:
 	state["node"] = "region"
 	var regions = content["regions"] as Dictionary
 	if not regions.has(rid):
-		$Panel/Stage.text = "这里什么都没有。"
+		_stage_node().text = "这里什么都没有。"
 		return
 	var r = regions[rid] as Dictionary
-	$Panel/Stage.text = r["name"] + "\n" + r.get("metaphor", "") + "\n" + r.get("desc", "")
-	# 区域进入时的管理员反应（enter:rid）
+	_stage_node().text = r["name"] + "\n" + r.get("metaphor", "") + "\n" + r.get("desc", "")
+	# 区域进入时的管理员反应（enter:rid，受在场门控）
 	_companion("enter:" + rid)
+	# 管理员不在本区：清空底部台词（你独自在这间屋里），肖像由 _refresh_portrait 隐藏
+	if not _librarian_present(rid):
+		_curator_node().text = ""
 	_refresh_region_controls()
+	_refresh_portrait()
 
 ## 只重建热点 / 出口 / 拼合按钮，不动 Stage 与 Curator（供热点交互后局部刷新）
 func _refresh_region_controls() -> void:
@@ -325,12 +523,14 @@ func _refresh_region_controls() -> void:
 	if not regions.has(rid):
 		return
 	var r = regions[rid] as Dictionary
-	_clear_container($Panel/Hotspots)
+	_clear_container(_hotspots_node())
 	var hots = r["hotspots"] as Dictionary
 	for hid in hots.keys():
 		var h = hots[hid] as Dictionary
 		# requiresFlag 门控：未置位前该热点不出现（投信前「与管理员对话」不可见）
-		if h.get("requiresFlag", "") != "" and not state.get(h["requiresFlag"], false):
+		# 置位来源可以是顶层旗标（setFlag / moveLibrarian），也可以是跨夜携带的线索（unlocks 产出的 clue id）
+		var rf_flag = h.get("requiresFlag", "")
+		if rf_flag != "" and not (state.get(rf_flag, false) or state["clues"].has(rf_flag)):
 			continue
 		var key = rid + ":" + hid
 		var mark = ""
@@ -339,27 +539,34 @@ func _refresh_region_controls() -> void:
 		var b := Button.new()
 		b.text = h["label"] + mark
 		b.pressed.connect(_on_hotspot.bind(rid, hid))
-		$Panel/Hotspots.add_child(b)
-	_clear_container($Panel/Actions)
+		_hotspots_node().add_child(b)
+	_clear_container(_actions_node())
 	var ex = r["exits"] as Array
 	for e in ex:
 		var to = e["to"]
+		var locked_region := false
 		if regions.has(to) and regions[to].get("locked", false):
-			# 锁定区（夜D 解锁前）：灰显不可点，不计入出口
+			locked_region = true
+		# 出口门控（限制与引导）：未满足前置条件时灰显不可点，与锁定区一致处理，
+		# 不计入可走出口。让场景切换受引导，而非自由乱窜（对应「每夜约 10 分钟」节奏约束）。
+		var req_flag: String = e.get("requiresFlag", "")
+		var req_reveal: bool = e.get("requiresReveal", false)
+		var gated: bool = locked_region or (req_flag != "" and not state.get(req_flag, false)) or (req_reveal and not state.get("revealSeen", false))
+		if gated:
 			var lb := Button.new()
-			lb.text = "（门锁着）" + e["label"]
+			lb.text = e.get("lockedLabel", "（还去不了）")
 			lb.disabled = true
-			$Panel/Actions.add_child(lb)
+			_actions_node().add_child(lb)
 			continue
 		var b := Button.new()
 		b.text = e["label"] + " →"
 		b.pressed.connect(_on_goto.bind(to))
-		$Panel/Actions.add_child(b)
+		_actions_node().add_child(b)
 	# 常驻「回到服务台」：服务台是图书馆的家，永远可回（对应 gap1 的回服务台诉求）
 	var home := Button.new()
 	home.text = "⌂ 回到服务台"
 	home.pressed.connect(_on_goto.bind("service_desk"))
-	$Panel/Actions.add_child(home)
+	_actions_node().add_child(home)
 	_try_offer_reveal()
 	_render_memories()
 
@@ -375,16 +582,22 @@ func _apply_interaction(rid: String, hid: String, h: Dictionary, key: String) ->
 	else:
 		narrative = h.get("again", h.get("once", ""))
 	if narrative != "":
-		$Panel/Stage.text = narrative
+		_stage_node().text = narrative
 	if h.has("unlocks"):
 		var u = h["unlocks"] as Dictionary
 		state["clues"][u["id"]] = u["text"]
+	# 走动：先把管理员移到另一区（如「他走到你身边」），再决定台词门控，
+	# 这样「走了过来」的热点其台词才会在到达后出现（避免人未到、声先到）。
+	if h.has("moveLibrarian"):
+		_apply_move_librarian(h["moveLibrarian"])
+		_refresh_portrait()
 	var cur := ""
 	if first:
 		cur = h.get("curatorOnce", "")
 	else:
 		cur = h.get("curatorAgain", h.get("curatorOnce", ""))
-	if cur != "":
+	# 在场门控：管理员不在本区，热点自带台词也沉默（避免「有声音没脸」）
+	if cur != "" and _librarian_present(rid):
 		_set_curator(cur)
 	else:
 		_companion("hot:" + rid + ":" + hid)
@@ -409,12 +622,13 @@ func _on_hotspot(rid: String, hid: String) -> void:
 		return
 	# 局部刷新（保留 Stage 叙事 + Curator 反应），再补追问按钮
 	_refresh_region_controls()
-	if h.has("ask") and not state["asking"].has(key):
+	# 追问是向管理员发问；他不在本区则不出现追问入口（你不会对着空气提问）
+	if h.has("ask") and not state["asking"].has(key) and _librarian_present(rid):
 		var a = h["ask"] as Dictionary
 		var b := Button.new()
 		b.text = a["prompt"]
 		b.pressed.connect(_on_ask.bind(rid, hid, ""))
-		$Panel/Actions.add_child(b)
+		_actions_node().add_child(b)
 	# 结算：正确 / 特殊互动的专属反馈页（避免「点一遍就完」）
 	if h.has("settlement"):
 		if h.get("toExit", false):
@@ -430,15 +644,16 @@ func _enter_closeup(rid: String, hid: String) -> void:
 	var key = rid + ":" + hid
 	state["visitedHot"][key] = true
 	var cu = content["regions"][rid]["hotspots"][hid]["closeup"] as Dictionary
-	$Panel/Stage.text = cu.get("stage", "")
+	_stage_node().text = cu.get("stage", "")
 	_companion("enter_closeup:" + rid + ":" + hid)
 	_refresh_closeup_controls()
+	_refresh_portrait()
 
 func _refresh_closeup_controls() -> void:
 	var rid: String = state["currentRegion"]
 	var hid: String = state["closeup"]
 	var cu = content["regions"][rid]["hotspots"][hid]["closeup"] as Dictionary
-	_clear_container($Panel/Hotspots)
+	_clear_container(_hotspots_node())
 	var subs = cu["hotspots"] as Dictionary
 	for subid in subs.keys():
 		var s = subs[subid] as Dictionary
@@ -451,17 +666,17 @@ func _refresh_closeup_controls() -> void:
 			var lb := Button.new()
 			lb.text = s.get("lockedLabel", "（还打不开）") + mark
 			lb.disabled = true
-			$Panel/Hotspots.add_child(lb)
+			_hotspots_node().add_child(lb)
 			continue
 		var b := Button.new()
 		b.text = s["label"] + mark
 		b.pressed.connect(_on_closeup_hotspot.bind(rid, hid, subid))
-		$Panel/Hotspots.add_child(b)
-	_clear_container($Panel/Actions)
+		_hotspots_node().add_child(b)
+	_clear_container(_actions_node())
 	var back := Button.new()
 	back.text = "退回 · 离开近景"
 	back.pressed.connect(_on_closeup_back)
-	$Panel/Actions.add_child(back)
+	_actions_node().add_child(back)
 
 func _on_closeup_hotspot(rid: String, hid: String, subid: String) -> void:
 	AudioManager.ensure_started()
@@ -496,17 +711,17 @@ func _open_settlement(data: Dictionary, return_node: String, return_closeup: Str
 
 func _render_settlement() -> void:
 	var d = state["settlementData"] as Dictionary
-	_clear_container($Panel/Hotspots)
-	_clear_container($Panel/Actions)
-	_clear_container($Panel/Memories)
+	_clear_container(_hotspots_node())
+	_clear_container(_actions_node())
+	_clear_container(_memories_node())
 	var txt: String = "【结算】" + str(d.get("title", "")) + "\n\n" + str(d.get("body", ""))
 	if d.has("gained"):
 		txt += "\n\n· " + d["gained"]
-	$Panel/Stage.text = txt
+	_stage_node().text = txt
 	var b := Button.new()
 	b.text = "继续 ▶"
 	b.pressed.connect(_on_settlement_continue)
-	$Panel/Actions.add_child(b)
+	_actions_node().add_child(b)
 
 func _on_settlement_continue() -> void:
 	AudioManager.ensure_started()
@@ -534,7 +749,18 @@ func _on_ask(rid: String, hid: String, subid: String = "") -> void:
 	if subid != "":
 		key = key + ":" + subid
 	state["asking"][key] = true
-	_set_curator(a.get("then", "……"))
+	if _librarian_present(rid):
+		var line: String = a.get("then", "……")
+		# thenByFlag：玩家主动对话时，按其刚经历的状态给对应回应（沉默旁观者的回响）
+		# 注意 c_tier_* 以线索形式置位（state["clues"]），非布尔旗标，故查 clues
+		if a.has("thenByFlag"):
+			var tb: Dictionary = a["thenByFlag"]
+			var clues: Dictionary = state.get("clues", {})
+			for fk in tb.keys():
+				if clues.has(fk):
+					line = tb[fk]
+					break
+		_set_curator(line)
 	if subid != "":
 		_refresh_closeup_controls()
 	else:
@@ -544,7 +770,7 @@ func _on_ask(rid: String, hid: String, subid: String = "") -> void:
 func _open_hook_options(rid: String, hid: String, h: Dictionary, is_closeup := false, closeup_hid := "") -> void:
 	var prompt: String = h.get("hookPrompt", "你要写点什么吗？")
 	_set_curator(prompt)
-	_clear_container($Panel/Actions)
+	_clear_container(_actions_node())
 	for opt in (h["options"] as Array):
 		var b := Button.new()
 		b.text = opt["label"]
@@ -552,7 +778,7 @@ func _open_hook_options(rid: String, hid: String, h: Dictionary, is_closeup := f
 			b.pressed.connect(_on_hook_choice.bind(rid, hid, h, opt["id"], "closeup", closeup_hid))
 		else:
 			b.pressed.connect(_on_hook_choice.bind(rid, hid, h, opt["id"], "region", ""))
-		$Panel/Actions.add_child(b)
+		_actions_node().add_child(b)
 	var back := Button.new()
 	back.text = "（什么都不写，退回去）"
 	# 退回去只需局部刷新对应控件（近景回近景 / 区域回区域），不走完整 _on_goto
@@ -563,7 +789,7 @@ func _open_hook_options(rid: String, hid: String, h: Dictionary, is_closeup := f
 		else:
 			_refresh_region_controls()
 	)
-	$Panel/Actions.add_child(back)
+	_actions_node().add_child(back)
 
 func _on_hook_choice(rid: String, hid: String, h: Dictionary, opt_id: String, return_node := "region", return_closeup := "") -> void:
 	AudioManager.ensure_started()
@@ -578,13 +804,17 @@ func _on_hook_choice(rid: String, hid: String, h: Dictionary, opt_id: String, re
 		# setFlag：钩子结果可置位一个状态标志（mail → mailedLetter）
 		if r.has("setFlag"):
 			state[r["setFlag"]] = true
+		# 走动：钩子结果可把管理员移到另一区
+		if r.has("moveLibrarian"):
+			_apply_move_librarian(r["moveLibrarian"])
+			_refresh_portrait()
 		# 近景钩子回到 closeup，区域钩子回到 region
 		if return_node == "closeup":
 			state["node"] = "closeup"
 		else:
 			state["node"] = "region"
 		var rr = content["regions"][rid] as Dictionary
-		$Panel/Stage.text = rr["name"] + "\n" + rr.get("metaphor", "") + "\n" + rr.get("desc", "")
+		_stage_node().text = rr["name"] + "\n" + rr.get("metaphor", "") + "\n" + rr.get("desc", "")
 		_set_curator(r.get("line", ""))
 		if return_node == "closeup":
 			_refresh_closeup_controls()
@@ -611,7 +841,7 @@ func _try_offer_reveal() -> void:
 		b.name = "RevealBtn"
 		b.text = "（碎片已凑齐）拼合那一夜 ▶"
 		b.pressed.connect(_on_enter_reveal)
-		$Panel/Actions.add_child(b)
+		_actions_node().add_child(b)
 
 func _night_index_of(night_id: String) -> int:
 	## 把夜 id 映射成夜序下标（F2/F3 跨夜用）
@@ -629,7 +859,7 @@ func _on_enter_reveal() -> void:
 			return
 	state["node"] = "reveal"
 	state["revealSeen"] = true
-	$Panel/Stage.text = rv["stage"]
+	_stage_node().text = rv["stage"]
 	# 拼合时解锁记忆（F3 · 记忆按夜分级）：
 	# 记忆条目可为字符串（总是解锁，兼容旧数据）或 {night, text} 字典。
 	# 只有 night 归属 <= 当前夜才解锁；归因到夜D 的记忆在夜 A 不泄（待内容 red-line 重归因后生效）。
@@ -642,19 +872,20 @@ func _on_enter_reveal() -> void:
 				var mnight = (mv as Dictionary).get("night", "")
 				if mnight == "" or _night_index_of(mnight) <= ProgressState.night_index:
 					state["memories"][mid] = (mv as Dictionary).get("text", "")
-	_clear_container($Panel/Hotspots)
-	_clear_container($Panel/Actions)
+	_clear_container(_hotspots_node())
+	_clear_container(_actions_node())
 	_render_memories()
 	for a in (rv["actions"] as Array):
 		var b := Button.new()
 		b.text = a["label"]
 		b.pressed.connect(_on_node_action.bind(a["id"]))
-		$Panel/Actions.add_child(b)
+		_actions_node().add_child(b)
+	_refresh_portrait()
 
 # ── Ending：return / take / burn 三分支 ────────────────
 func _build_ending_actions() -> void:
-	_clear_container($Panel/Hotspots)
-	_clear_container($Panel/Actions)
+	_clear_container(_hotspots_node())
+	_clear_container(_actions_node())
 	if not content.has("ending"):
 		return
 	var ed = content["ending"] as Dictionary
@@ -662,7 +893,7 @@ func _build_ending_actions() -> void:
 		var b := Button.new()
 		b.text = a["label"]
 		b.pressed.connect(_on_ending.bind(a["id"]))
-		$Panel/Actions.add_child(b)
+		_actions_node().add_child(b)
 
 func _on_ending(aid: String) -> void:
 	AudioManager.ensure_started()
@@ -672,19 +903,19 @@ func _on_ending(aid: String) -> void:
 	if ends.has(key):
 		state["endingText"] = ends[key]
 		state["node"] = "ending"
-		$Panel/Stage.text = ends[key]
-		$Panel/Curator.text = "（这是你自己的事了。）"
-		_clear_container($Panel/Hotspots)
-		_clear_container($Panel/Actions)
+		_stage_node().text = ends[key]
+		_curator_node().text = "（这是你自己的事了。）"
+		_clear_container(_hotspots_node())
+		_clear_container(_actions_node())
 
 # ── 收场（curtain）：夜尽，合上书 ──────────────────
 func _render_curtain() -> void:
-	_clear_container($Panel/Hotspots)
-	_clear_container($Panel/Actions)
-	_clear_container($Panel/Clues)
-	_clear_container($Panel/Memories)
-	$Panel/Stage.text = "（今夜闭馆。灯还亮着。）\n\n雨声贴着玻璃，慢慢远了。\n你合上《逾期之书》——可你知道，有些书，合上了也还在原地等你。"
-	$Panel/Curator.text = "（夜还长。下次来，灯还亮着。）"
+	_clear_container(_hotspots_node())
+	_clear_container(_actions_node())
+	_clear_container(_clues_node())
+	_clear_container(_memories_node())
+	_stage_node().text = "（今夜闭馆。灯还亮着。）\n\n雨声贴着玻璃，慢慢远了。\n你合上《逾期之书》——可你知道，有些书，合上了也还在原地等你。"
+	_curator_node().text = "（夜还长。下次来，灯还亮着。）"
 	# 过场帧：本夜声明 next 且夜程表有后继 → 在收场页追加下一夜的 frame（区分两天的非对话载体）
 	if content.has("next"):
 		var nxt: String = content["next"]
@@ -692,34 +923,43 @@ func _render_curtain() -> void:
 		if NIGHT_ORDER.has(nxt) and NIGHT_ORDER.find(nxt) > NIGHT_ORDER.find(cid):
 			var nxt_content: Dictionary = ContentLoader.get_night(nxt)
 			if nxt_content.has("frame"):
-				$Panel/Stage.text += "\n\n" + (nxt_content["frame"] as String)
+				_stage_node().text += "\n\n" + (nxt_content["frame"] as String)
 			var bn := Button.new()
 			bn.text = "继续 —— 下一夜"
-			bn.pressed.connect(load_night_by_id.bind(nxt))
-			$Panel/Actions.add_child(bn)
+			# 跨夜携带：点击「继续」时先把本夜可携带字段快照进 autoload，再加载下一夜
+			bn.pressed.connect(func():
+				_carry_forward()
+				load_night_by_id(nxt)
+			)
+			_actions_node().add_child(bn)
 	var b := Button.new()
 	b.text = "重新翻开《逾期之书》"
 	b.pressed.connect(_on_restart)
-	$Panel/Actions.add_child(b)
+	_actions_node().add_child(b)
+	_refresh_portrait()
 
 func _on_restart() -> void:
 	# 开发期 DEBUG_IGNORE_SAVE 下每次启动即从 notice 开场；此处供收场后重玩
 	state = _fresh_state()
+	if content.has("librarianHome"):
+		state["librarianWhere"] = content["librarianHome"]
+	elif content.get("regions", {}).has("service_desk"):
+		state["librarianWhere"] = "service_desk"
 	state["node"] = "notice"
 	_render_node("notice")
 
 # ── 记忆（memories）：只显示已解锁的 state.memories ──
 func _render_memories() -> void:
-	_clear_container($Panel/Memories)
+	_clear_container(_memories_node())
 	if state["memories"].is_empty():
 		return
 	var head := Label.new()
 	head.text = "—— 你想起的事 ——"
-	$Panel/Memories.add_child(head)
+	_memories_node().add_child(head)
 	for mid in state["memories"].keys():
 		var l := Label.new()
 		l.text = "· " + state["memories"][mid]
-		$Panel/Memories.add_child(l)
+		_memories_node().add_child(l)
 
 # ── 存档（B）────────────────────────────────────────────
 func _on_save() -> void:
