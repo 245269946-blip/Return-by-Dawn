@@ -31,6 +31,8 @@
 
 ## 仓库结构
 
+> 想一页分清哪些是当前事实源、哪些是历史存档，看 **`REPO_GUIDE.md`**。
+
 ```
 Return-by-Dawn/                       ← 仓库根（对应本机 overdue-book/）
 ├── godot/                            ← ★ Godot 工程（用 Godot 打开这个目录）
@@ -52,7 +54,9 @@ Return-by-Dawn/                       ← 仓库根（对应本机 overdue-book/
 │   ├── tools/                        ← spine_check.py（脊柱泄漏护栏）/ pacing_estimate.py 等
 │   └── art/                          ← 待用美术
 ├── story-draft-v6.md                 ← ★ 叙事圣经（19 条不可动摇原则 + 各夜框架，唯一事实源）
-├── 设计讨论稿（story-draft-v1~v5、夜A框架、认知冲击密度 …）← 叙事设计演进史，参考用
+├── ending-three-tier-design-20260716.md ← 终章三态结局设计（v6 补充，生效）
+├── REPO_GUIDE.md                     ← 仓库导览：一页分清「确认内容 / 历史存档」
+├── archive/                          ← 📦 历史存档（旧稿 v1~v5 / 早期设计稿 / 废弃原型；只读参考，非依据）
 └── .gitignore                        ← 已排除 .godot 缓存 / 日志 / 生成产物
 ```
 
