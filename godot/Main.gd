@@ -489,6 +489,7 @@ func _on_enter_first_region() -> void:
 
 func _on_goto(rid: String) -> void:
 	AudioManager.ensure_started()
+	AudioManager.play_sfx("click")
 	var regions = content["regions"] as Dictionary
 	if regions.has(rid) and regions[rid].get("void", false):
 		_set_curator("（门虚掩着，推不开。）")
@@ -502,6 +503,8 @@ func _on_goto(rid: String) -> void:
 func _enter_region(rid: String) -> void:
 	state["currentRegion"] = rid
 	state["node"] = "region"
+	# 音频：区域切换时同步雨声/环境 mood（无音频素材时 AudioManager 自动静默回退，不报错）
+	AudioManager.set_mood(rid)
 	var regions = content["regions"] as Dictionary
 	if not regions.has(rid):
 		_stage_node().text = "这里什么都没有。"
@@ -605,6 +608,7 @@ func _apply_interaction(rid: String, hid: String, h: Dictionary, key: String) ->
 
 func _on_hotspot(rid: String, hid: String) -> void:
 	AudioManager.ensure_started()
+	AudioManager.play_sfx("click")
 	var regions = content["regions"] as Dictionary
 	var r = regions[rid] as Dictionary
 	var h = r["hotspots"][hid] as Dictionary
@@ -680,6 +684,7 @@ func _refresh_closeup_controls() -> void:
 
 func _on_closeup_hotspot(rid: String, hid: String, subid: String) -> void:
 	AudioManager.ensure_started()
+	AudioManager.play_sfx("page")
 	var cu = content["regions"][rid]["hotspots"][hid]["closeup"] as Dictionary
 	var s = cu["hotspots"][subid] as Dictionary
 	var key = rid + ":" + hid + ":" + subid
@@ -793,6 +798,8 @@ func _open_hook_options(rid: String, hid: String, h: Dictionary, is_closeup := f
 
 func _on_hook_choice(rid: String, hid: String, h: Dictionary, opt_id: String, return_node := "region", return_closeup := "") -> void:
 	AudioManager.ensure_started()
+	if opt_id == "mail":
+		AudioManager.play_sfx("slot")
 	var res = h["hookResults"] as Dictionary
 	if res.has(opt_id):
 		var r = res[opt_id] as Dictionary
