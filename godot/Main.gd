@@ -127,6 +127,8 @@ func load_night_by_id(id: String) -> void:
 	# 并入本夜 state（线索 / 记忆 / 物证形态 / 已选便签）。这是「夜与夜真正串联」的地基。
 	# 注意：仅并入 cross_night 中已存在的键，不改动本夜引擎自身的初始化。
 	_merge_cross_night()
+	AudioManager.set_chapter(id)
+	AudioManager.play_sting("notice")
 	_render_node("notice")
 
 # ── 跨夜携带（框架层 · F2/F3）────────────────────────
@@ -427,6 +429,9 @@ func _render_content_node(node: String) -> void:
 		_actions_node().add_child(b)
 	# 进入节点时触发一次管理员反应（剧情节点非空间锚定，恒定触发）
 	_companion("enter:" + node)
+	AudioManager.play_sfx("companion")
+	if node == "reveal":
+		AudioManager.play_sting("reveal")
 	if node == "ending":
 		_curator_node().text = "（这是你自己的事了。）"
 	_refresh_portrait()
@@ -447,6 +452,7 @@ func _on_node_action(aid: String) -> void:
 			_enter_region("utility_zone")
 		"to_exit":
 			state["node"] = "exit"
+			AudioManager.play_sting("exit")
 			_render_node("exit")
 		"to_close":
 			_render_curtain()
@@ -490,6 +496,7 @@ func _on_enter_first_region() -> void:
 func _on_goto(rid: String) -> void:
 	AudioManager.ensure_started()
 	AudioManager.play_sfx("click")
+	AudioManager.play_sfx("door")
 	var regions = content["regions"] as Dictionary
 	if regions.has(rid) and regions[rid].get("void", false):
 		_set_curator("（门虚掩着，推不开。）")
@@ -612,6 +619,8 @@ func _on_hotspot(rid: String, hid: String) -> void:
 	var regions = content["regions"] as Dictionary
 	var r = regions[rid] as Dictionary
 	var h = r["hotspots"][hid] as Dictionary
+	# 内容可声明 "sfx" 键（drawer/water/breath 等），触发对应专用音效（缺省静默回退）
+	AudioManager.play_sfx(h.get("sfx", ""))
 	# 近景：有 closeup 的热点先进入近景，不直接摊开全部内容（锈湖式 zoom-in）
 	if h.has("closeup"):
 		_enter_closeup(rid, hid)
@@ -687,6 +696,7 @@ func _on_closeup_hotspot(rid: String, hid: String, subid: String) -> void:
 	AudioManager.play_sfx("page")
 	var cu = content["regions"][rid]["hotspots"][hid]["closeup"] as Dictionary
 	var s = cu["hotspots"][subid] as Dictionary
+	AudioManager.play_sfx(s.get("sfx", ""))
 	var key = rid + ":" + hid + ":" + subid
 	# requiresReveal 门控：未拼合前不可投递信件
 	if s.get("requiresReveal", false) and not state.get("revealSeen", false):
@@ -801,6 +811,7 @@ func _on_hook_choice(rid: String, hid: String, h: Dictionary, opt_id: String, re
 	if opt_id == "mail":
 		AudioManager.play_sfx("slot")
 	var res = h["hookResults"] as Dictionary
+	AudioManager.play_sfx(h.get("sfx", ""))
 	if res.has(opt_id):
 		var r = res[opt_id] as Dictionary
 		# 互斥：记录唯一选择，后续只复述不叠加
@@ -917,6 +928,7 @@ func _on_ending(aid: String) -> void:
 
 # ── 收场（curtain）：夜尽，合上书 ──────────────────
 func _render_curtain() -> void:
+	AudioManager.play_sting("curtain")
 	_clear_container(_hotspots_node())
 	_clear_container(_actions_node())
 	_clear_container(_clues_node())
