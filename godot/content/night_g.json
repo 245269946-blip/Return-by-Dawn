@@ -14,10 +14,22 @@
       "metaphor": "程序性温柔的入口——他今天从柜台后走出来迎你",
       "desc": "服务台后的灯拧得很低。他今天没坐在里头，而是站在台前，像等了你很久。",
       "exits": [
-        { "label": "去雨夜门廊", "to": "entry_porch" },
-        { "label": "去灯控室", "to": "archive_lamp" },
-        { "label": "去阅览区", "to": "reading_room" },
-        { "label": "去自习学习区", "to": "study_zone" }
+        {
+          "label": "去雨夜门廊",
+          "to": "entry_porch"
+        },
+        {
+          "label": "去灯控室",
+          "to": "archive_lamp"
+        },
+        {
+          "label": "去阅览区",
+          "to": "reading_room"
+        },
+        {
+          "label": "去自习学习区",
+          "to": "study_zone"
+        }
       ],
       "hotspots": {
         "lamp_intro": {
@@ -50,7 +62,10 @@
       "librarian": false,
       "desc": "玻璃门外雨停了，地还湿着。门是进来的地方，也是回去的地方。",
       "exits": [
-        { "label": "进馆·去服务台", "to": "service_desk" }
+        {
+          "label": "进馆·去服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "lamp_behind": {
@@ -70,7 +85,10 @@
       "librarian": false,
       "desc": "一排排座位空着。他跟过来，像导游带你看自己的馆。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
+        {
+          "label": "回服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "his_shelf": {
@@ -95,28 +113,22 @@
       },
       "desc": "一排自习桌空着。有一盏灯的位置，像一直有人替你留着。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
-      ],
-      "hotspots": {
-        "keep_lamp": {
-          "label": "替你留着的那盏灯",
-          "once": "自习区一排灯里，只有这一盏一直亮着。他不知什么时候走到了你身边，把灯往空位偏了偏：「这盏灯，我一直替你留着。」",
-          "again": "那盏灯还亮着，空位还在。",
-          "curatorOnce": "「这盏灯，我一直替你留着。」他站在你身边，没催你。",
-          "unlocks": {
-            "id": "c_lamp_kept",
-            "text": "自习区有一盏灯，管理员一直替你留着（机制④·留灯仪式·狂欢仍在）"
-          },
-          "moveLibrarian": "study_zone"
+        {
+          "label": "回服务台",
+          "to": "service_desk"
         }
-      }
+      ],
+      "hotspots": {}
     },
     "archive_lamp": {
       "name": "灯控室",
       "metaphor": "灯光与档案的源头——他带你来看他装的灯",
       "desc": "灯控室。整座馆的灯从这来。他拉你进来，像展示一个秘密。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
+        {
+          "label": "回服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "lamp_install": {
@@ -149,6 +161,35 @@
               }
             }
           }
+        },
+        "bulbs_shelf": {
+          "label": "排好的一架备用电珠",
+          "once": "灯控室的架子上摆着一排备用电珠，按夜序排好。",
+          "unlocks": {
+            "id": "g_bulbs",
+            "text": "备用电珠按夜序摆好——像有人替你算好每个会灭的今晚"
+          },
+          "closeup": {
+            "stage": "你数了数那些电珠。每一颗都对应一个你差点没来的夜晚。",
+            "hotspots": {
+              "ordered": {
+                "label": "按夜序排的电珠",
+                "once": "第七颗旁边写了小字：『这夜他最想逃。』——他记得你每一次想逃，又每一次把灯留着。",
+                "unlocks": {
+                  "id": "g_bulbs_order",
+                  "text": "第七颗写『这夜他最想逃』——他记得你每次想逃"
+                }
+              },
+              "warm": {
+                "label": "最旧那颗的余温",
+                "once": "最旧那颗电珠还有人握过的余温。他换过太多次，手比光先老。",
+                "unlocks": {
+                  "id": "g_bulbs_warm",
+                  "text": "最旧电珠有他握过的余温——他换太多次，手比光先老"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -165,21 +206,39 @@
     "notice": {
       "stage": "第八天。\n\n你被赶走的那一夜，门在身后轻轻合上。可第二天，你的手还是自己推开了它——像惯性的回头，你又回来了。\n\n逾期通知 · 午夜送达\n\n《灯是谁装的》已逾期。\n请于今夜闭馆前，归还至午夜图书馆。\n\n逾期不息，灯不灭。\n\n—— 你照例来了。他没拦。",
       "actions": [
-        { "id": "read", "label": "弯腰捡起，读完整张通知", "primary": true },
-        { "id": "toss", "label": "先揉成一团——最后还是展平了" }
+        {
+          "id": "read",
+          "label": "弯腰捡起，读完整张通知",
+          "primary": true
+        },
+        {
+          "id": "toss",
+          "label": "先揉成一团——最后还是展平了"
+        }
       ]
     },
     "enter": {
       "stage": "推门。他比平时开朗，从柜台后走出来迎你：「来啦。今晚我带你看看这馆。」\n\n白噪音被木门切断。灯比昨夜暖一点，暖得有点反常——你隐约觉得他比平时更用力。但你贪恋这份被稳稳等着的甜，没去想为什么。",
       "actions": [
-        { "id": "desk", "label": "走近柜台", "primary": true },
-        { "id": "door", "label": "先在门口站一会儿，听雨" }
+        {
+          "id": "desk",
+          "label": "走近柜台",
+          "primary": true
+        },
+        {
+          "id": "door",
+          "label": "先在门口站一会儿，听雨"
+        }
       ]
     },
     "exit": {
       "stage": "他把你送到门口，笑问：「那明晚你还来还书吗？」\n\n灯还亮着。你回头，能看见路。\n\n（这是最后的甜。你明知『是我』，却还贪恋被稳稳等着——这根续借的线，被他轻轻拽回手里。）",
       "actions": [
-        { "id": "to_close", "label": "推开门，走进夜色 ▶", "primary": true }
+        {
+          "id": "to_close",
+          "label": "推开门，走进夜色 ▶",
+          "primary": true
+        }
       ]
     }
   },

@@ -171,3 +171,11 @@ func play_sting(kind: String) -> void:
 		return
 	sfx_player.stream = s
 	sfx_player.play(0.0)
+
+## 主音量 / 静音（设置页用，控制 Master 总线）
+func set_master_volume(v: float) -> void:
+	var vol: float = clamp(v, 0.0, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(max(vol, 0.0001)))
+
+func set_muted(m: bool) -> void:
+	AudioServer.set_bus_mute(0, m)

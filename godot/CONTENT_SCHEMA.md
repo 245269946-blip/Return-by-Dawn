@@ -76,6 +76,23 @@
 | `companion` | object | 是 | 管理员常驻反应，键见下 |
 | `memories` | object | 否 | 记忆字典 `m_id -> text` |
 | `librarianHome` | string | 否 | 管理员夜级初始位置（区域 id）；省略回退 `service_desk` |
+| `weather` | string | 否 | 当前夜天气变量，默认 `"rain"`；配合热点 `rain_only` 把天气变成探索变量（v6 §八 动态探索） |
+| `librarianNotice` | string | 否 | 若设置，通知夜额外显示「管理员也收到逾期通知」暗线文本，并置位 `hasLibrarianNotice` 旗标（驱动服务台 `requiresFlag: hasLibrarianNotice` 热点）；埋「他也是被等者」（v6 §八 动态探索） |
+
+---
+
+## 场景层 `scenes.json`（近景挂场景 · 恒定）
+
+> 近景（closeup）是**场景本身物理上长什么样**，不是逐夜的剧情素材。
+> 同一间图书馆，服务台就是有那杯凉茶、那本登记册——不管玩家第几次来。
+> 因此近景从逐夜 JSON 抽出，统一放进 `content/scenes.json`，由引擎在加载每一夜时并进去。
+
+- 结构：`{ "regions": { "<rid>": { "hotspots": { "<hid>": { /* Hotspot */ } } } } }`
+- 每个区域 2 个恒定近景（各带 2 条可深入子线索），共 16 个，覆盖全部 8 个区域（含两个管理员专属区）。
+- **合并规则**（`Main._merge_scene_base`）：逐夜 JSON 已有同名 `hid` 时逐夜优先（允许当夜覆盖）；否则用场景层补足。
+- 逐夜 JSON **只保留当夜专属叙事物件**（如夜B 空红包 `red_packet`、夜C 湿毛巾 `towel_close`、夜A 书架移位 `shelf_shift`、夜D 馆员信箱 `librarian_inbox`），不复写场景层近景。
+- 两个管理员专属区（`lounge_stairs` / `archive_lamp`）的近景定义在场景层，**仅当该区在当夜被解锁（出现在 regions 中）时才并入**——所以它们从夜D 起恒定可探索。
+- `scenes.json` 文本出现在受护栏约束的夜（序章/A/B/C），故 `tools/spine_check.py` 也扫描它，近景文案须为中性物观察、不得点破自认。
 
 ---
 
@@ -121,7 +138,10 @@
     "stage": "你把书摊开。…",
     "hotspots": { "<subhid>": { /* Hotspot */ } }
   },
-  "moveLibrarian": "reading_room"   // 可选：触发后把管理员移到该区（走动）
+  "moveLibrarian": "reading_room",   // 可选：触发后把管理员移到该区（走动）
+  "rain_only": true,                 // 可选（v6 §八 动态探索）：仅 weather=rain 时可见，晴天隐藏
+  "shift": { "1": "…", "2": "…" },   // 可选（v6 §八 动态探索·书架移位）：按夜序(=NIGHT_ORDER下标)替换 once/again 文本
+  "shiftLabel": { "1": "…", "2": "…" } // 可选：同上，仅替换热点按钮 label
 }
 ```
 

@@ -14,9 +14,18 @@
       "metaphor": "程序性温柔的入口——他今天话最多",
       "desc": "服务台后的灯拧得很低。他比昨天更开朗，拉着你东看西看。",
       "exits": [
-        { "label": "去雨夜门廊", "to": "entry_porch" },
-        { "label": "去档案室", "to": "archive_lamp" },
-        { "label": "去阅览区", "to": "reading_room" }
+        {
+          "label": "去雨夜门廊",
+          "to": "entry_porch"
+        },
+        {
+          "label": "去档案室",
+          "to": "archive_lamp"
+        },
+        {
+          "label": "去阅览区",
+          "to": "reading_room"
+        }
       ],
       "hotspots": {
         "sweet_claim": {
@@ -48,7 +57,10 @@
       "metaphor": "灯光与档案的源头——半开的门里，摆着序章那本",
       "desc": "档案室的门半开着，里头的灯亮着。你本来没想进去，脚却自己晃了过去。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
+        {
+          "label": "回服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "half_open_door": {
@@ -82,6 +94,35 @@
               }
             }
           }
+        },
+        "records_shelf": {
+          "label": "半开门里的档案架",
+          "once": "半开的门里，档案架按字母排着每个人的逾期记录。",
+          "unlocks": {
+            "id": "h_records",
+            "text": "档案架按字母排着每个人的逾期记录"
+          },
+          "closeup": {
+            "stage": "你翻到自己的那一格。纸页停在很多个『未还』。",
+            "hotspots": {
+              "yours": {
+                "label": "你的那一格",
+                "once": "每一栏的备注都写着同一句：『已替你续。』——你以为自己一直在拖，其实有人一直替你扛着。",
+                "unlocks": {
+                  "id": "h_record_yours",
+                  "text": "你的记录每栏备注『已替你续』——有人一直替你扛"
+                }
+              },
+              "his": {
+                "label": "管理员的格子",
+                "once": "管理员的格子是空的。他没有任何逾期，因为他从没离开过，也就从没『该还』过——他把自己留在了这儿。",
+                "unlocks": {
+                  "id": "h_record_his",
+                  "text": "管理员的格子是空的——他从没离开，从没『该还』"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -91,7 +132,10 @@
       "librarian": false,
       "desc": "玻璃门外夜色很静。门是进来的地方，也是回去的地方。",
       "exits": [
-        { "label": "进馆·去服务台", "to": "service_desk" }
+        {
+          "label": "进馆·去服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "lamp_behind": {
@@ -111,7 +155,10 @@
       "librarian": false,
       "desc": "一排排座位空着。你常坐的那个位子，椅背上搭着一块除尘布。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
+        {
+          "label": "回服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "his_shelf": {
@@ -140,21 +187,39 @@
     "notice": {
       "stage": "第九天。\n\n狂欢正甜。你又回来了。\n\n逾期通知 · 午夜送达\n\n《档案室半开的门》已逾期。\n请于今夜闭馆前，归还至午夜图书馆。\n\n逾期不息，灯不灭。\n\n—— 你照例来了。他比昨天更开朗。",
       "actions": [
-        { "id": "read", "label": "弯腰捡起，读完整张通知", "primary": true },
-        { "id": "toss", "label": "先揉成一团——最后还是展平了" }
+        {
+          "id": "read",
+          "label": "弯腰捡起，读完整张通知",
+          "primary": true
+        },
+        {
+          "id": "toss",
+          "label": "先揉成一团——最后还是展平了"
+        }
       ]
     },
     "enter": {
       "stage": "推门。他比昨天更开朗，拉着你东看西看：「你看，这里全是给你留的。」\n\n灯比昨夜更暖一点。你贪恋这份甜，没去想他为什么忽然话这么多、笑这么用力。",
       "actions": [
-        { "id": "desk", "label": "走近柜台", "primary": true },
-        { "id": "door", "label": "先在门口站一会儿" }
+        {
+          "id": "desk",
+          "label": "走近柜台",
+          "primary": true
+        },
+        {
+          "id": "door",
+          "label": "先在门口站一会儿"
+        }
       ]
     },
     "exit": {
       "stage": "他把你送到门口，笑问：「那明晚你还来还书吗？」\n\n灯还亮着。你回头，能看见路。\n\n（你明知『是我』，却把档案室里那行「等你还」当情话收下——门一直没锁，是你自己没推开。）",
       "actions": [
-        { "id": "to_close", "label": "推开门，走进夜色 ▶", "primary": true }
+        {
+          "id": "to_close",
+          "label": "推开门，走进夜色 ▶",
+          "primary": true
+        }
       ]
     }
   },

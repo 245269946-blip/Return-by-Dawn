@@ -14,10 +14,22 @@
       "metaphor": "程序性温柔的入口——今夜你们像老友",
       "desc": "服务台后的灯拧得很低。今夜你们不像馆员和读者，像两个老友。",
       "exits": [
-        { "label": "去雨夜门廊", "to": "entry_porch" },
-        { "label": "去阅览区", "to": "reading_room" },
-        { "label": "去便民配套区", "to": "utility_zone" },
-        { "label": "去自习学习区", "to": "study_zone" }
+        {
+          "label": "去雨夜门廊",
+          "to": "entry_porch"
+        },
+        {
+          "label": "去阅览区",
+          "to": "reading_room"
+        },
+        {
+          "label": "去便民配套区",
+          "to": "utility_zone"
+        },
+        {
+          "label": "去自习学习区",
+          "to": "study_zone"
+        }
       ],
       "hotspots": {
         "hard_book": {
@@ -29,8 +41,14 @@
           "hook": true,
           "hookPrompt": "那本难还的书，怎么处置？",
           "options": [
-            { "id": "defer", "label": "推到明天再说" },
-            { "id": "now", "label": "今天就还了吧" }
+            {
+              "id": "defer",
+              "label": "推到明天再说"
+            },
+            {
+              "id": "now",
+              "label": "今天就还了吧"
+            }
           ],
           "hookResults": {
             "defer": {
@@ -80,7 +98,10 @@
       "librarian": false,
       "desc": "一排排座位空着。他跟过来，像导游，也像舍不得你离开视线的自己。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
+        {
+          "label": "回服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "his_shelf": {
@@ -99,10 +120,15 @@
     "utility_zone": {
       "name": "便民配套区",
       "metaphor": "别人遗落物的集散地——登记册上你的名字",
-      "librarian": { "requiresFlag": "librarianArrived:utility_zone" },
+      "librarian": {
+        "requiresFlag": "librarianArrived:utility_zone"
+      },
       "desc": "门厅旁的配套区。登记册摊在台上，你那页被翻得最旧。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
+        {
+          "label": "回服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "register": {
@@ -128,21 +154,12 @@
       },
       "desc": "一排自习桌空着。那盏灯还亮着，空位还在。",
       "exits": [
-        { "label": "回服务台", "to": "service_desk" }
-      ],
-      "hotspots": {
-        "keep_lamp": {
-          "label": "替你留着的那盏灯",
-          "once": "自习区那盏灯还亮着。他走到你身边，把灯往空位偏了偏，没说话——像在记最后一次你坐在这的样子。",
-          "again": "那盏灯还亮着，空位还在。",
-          "curatorOnce": "（他偏了偏灯，没说话。）",
-          "unlocks": {
-            "id": "c_lamp_kept",
-            "text": "自习区那盏灯还亮着——他像在记最后一次你坐在这（机制④·留灯仍在）"
-          },
-          "moveLibrarian": "study_zone"
+        {
+          "label": "回服务台",
+          "to": "service_desk"
         }
-      }
+      ],
+      "hotspots": {}
     },
     "entry_porch": {
       "name": "雨夜门廊",
@@ -150,7 +167,10 @@
       "librarian": false,
       "desc": "玻璃门外夜色很静。门是进来的地方，也是回去的地方。",
       "exits": [
-        { "label": "进馆·去服务台", "to": "service_desk" }
+        {
+          "label": "进馆·去服务台",
+          "to": "service_desk"
+        }
       ],
       "hotspots": {
         "lamp_behind": {
@@ -177,21 +197,39 @@
     "notice": {
       "stage": "第十天。\n\n狂欢到顶。你们像老友。\n\n逾期通知 · 午夜送达\n\n《最后一盏灯前的玩笑》已逾期。\n请于今夜闭馆前，归还至午夜图书馆。\n\n逾期不息，灯不灭。\n\n—— 你照例来了。他话最多的一夜。",
       "actions": [
-        { "id": "read", "label": "弯腰捡起，读完整张通知", "primary": true },
-        { "id": "toss", "label": "先揉成一团——最后还是展平了" }
+        {
+          "id": "read",
+          "label": "弯腰捡起，读完整张通知",
+          "primary": true
+        },
+        {
+          "id": "toss",
+          "label": "先揉成一团——最后还是展平了"
+        }
       ]
     },
     "enter": {
       "stage": "推门。他话最多的一夜，拉着你看东看西，笑个不停。你陪着笑，却在他转身时看见他目光里那点软——他在拖延自己的失去，正如你在拖延你的面对。\n\n灯比昨夜更暖。暖得，有点像告别。",
       "actions": [
-        { "id": "desk", "label": "走近柜台", "primary": true },
-        { "id": "door", "label": "先在门口站一会儿" }
+        {
+          "id": "desk",
+          "label": "走近柜台",
+          "primary": true
+        },
+        {
+          "id": "door",
+          "label": "先在门口站一会儿"
+        }
       ]
     },
     "exit": {
       "stage": "他把你送到门口，笑问：「那明晚你还来还书吗？」\n\n灯还亮着。你回头，能看见路。\n\n（他笑到最后，目光软了，没接话。你们都在用『明天』当壳——可明天，就要到了。）",
       "actions": [
-        { "id": "to_close", "label": "推开门，走进夜色 ▶", "primary": true }
+        {
+          "id": "to_close",
+          "label": "推开门，走进夜色 ▶",
+          "primary": true
+        }
       ]
     }
   },

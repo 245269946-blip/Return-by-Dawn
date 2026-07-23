@@ -67,6 +67,8 @@ func _fresh_state() -> Dictionary:
 		"settlementReturnNode": "",
 		"settlementReturnCloseup": "",
 		"settlementData": {},
+		"weather": "rain",
+		"hasLibrarianNotice": false,
 	}
 
 func _is_save_compatible() -> bool:
@@ -108,6 +110,9 @@ func load_night_by_id(id: String) -> void:
 		push_error("Main: 加载夜失败 " + id)
 		return
 	content = c
+	# 场景层合并：把 scenes.json 中每个区域恒定挂载的近景并进来，
+	# 使「场景长什么样」与逐夜 JSON 解耦——逐夜只承载当夜剧情与专属物件。
+	_merge_scene_base()
 	ProgressState.night_index = NIGHT_ORDER.find(id)
 	var unlocked := []
 	var regs = content["regions"] as Dictionary
@@ -118,6 +123,9 @@ func load_night_by_id(id: String) -> void:
 	ProgressState.unlocked_zones = unlocked
 	# 管理员初始位置：内容可声明 librarianHome；缺省 service_desk
 	state = _fresh_state()
+	# 动态探索系统（v6 §八）：天气变量 + 馆员收通知旗标
+	state["weather"] = content.get("weather", "rain")
+	state["hasLibrarianNotice"] = content.get("librarianNotice", "") != ""
 	if content.has("librarianHome"):
 		state["librarianWhere"] = content["librarianHome"]
 	elif regs.has("service_desk"):
@@ -130,6 +138,29 @@ func load_night_by_id(id: String) -> void:
 	AudioManager.set_chapter(id)
 	AudioManager.play_sting("notice")
 	_render_node("notice")
+
+# ── 场景层合并（框架层 · 近景挂场景而非逐夜）──────────────
+# 把 scenes.json 里每个区域恒定挂载的近景（含近景子线索）并到当前夜 regions。
+# 规则：逐夜已有同名 hid 时，逐夜优先（允许当夜覆盖场景层）；否则用场景层补足。
+# 这样同一场景（如服务台）的近景恒定，逐夜只追加当夜专属叙事物件。
+func _merge_scene_base() -> void:
+	var scenes := ContentLoader.get_scenes()
+	if not scenes.has("regions"):
+		return
+	var sregs := scenes["regions"] as Dictionary
+	var cregs := content.get("regions", {}) as Dictionary
+	for rid in cregs.keys():
+		if not sregs.has(rid):
+			continue
+		var sreg := sregs[rid] as Dictionary
+		if not sreg.has("hotspots"):
+			continue
+		var shs := sreg["hotspots"] as Dictionary
+		var crh := cregs[rid].get("hotspots", {}) as Dictionary
+		for hid in shs.keys():
+			if not crh.has(hid):
+				crh[hid] = shs[hid]
+		cregs[rid]["hotspots"] = crh
 
 # ── 跨夜携带（框架层 · F2/F3）────────────────────────
 # 收场「继续 —— 下一夜」点击时调用：把本夜的可携带字段快照进 autoload 的
@@ -251,6 +282,30 @@ func _memories_node() -> Node:
 
 func _on_gui_input(_event: InputEvent) -> void:
 	AudioManager.ensure_started()
+
+# ── 暂停菜单（Esc）──────────────────────────────
+# 全屏遮罩吸收输入，提供 继续 / 设置 / 回到标题。不真正暂停场景树，
+# 仅以遮罩阻断底层点击；美术期可替换 ui_helpers 的覆盖层皮肤。
+const UIHelpers := preload("res://ui_helpers.gd")
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and (event as InputEventKey).pressed and (event as InputEventKey).keycode == KEY_ESCAPE:
+		_toggle_pause()
+
+func _toggle_pause() -> void:
+	if get_node_or_null("PauseOverlay") != null:
+		_close_pause()
+		return
+	var ov := UIHelpers.open_pause(self,
+		func(): _close_pause(),
+		func(): UIHelpers.open_settings(self, func(): pass),
+		func(): get_tree().change_scene_to_file("res://TitleScreen.tscn"))
+	ov.name = "PauseOverlay"
+
+func _close_pause() -> void:
+	var ov = get_node_or_null("PauseOverlay")
+	if ov != null:
+		ov.queue_free()
 
 # ── 存档恢复（B）：字段与 demo 的 save() 一一对应 ──────
 func _restore_from_save() -> void:
@@ -416,7 +471,13 @@ func _render_content_node(node: String) -> void:
 	if not nodes.has(node):
 		return
 	var nd = nodes[node] as Dictionary
-	_stage_node().text = nd["stage"]
+	var stage_text: String = nd["stage"]
+	# 馆员收通知（v6 §八 动态探索）：通知夜显示「他也收到通知」暗线
+	if node == "notice" and state.get("hasLibrarianNotice", false):
+		var ln: String = content.get("librarianNotice", "")
+		if ln != "":
+			stage_text += "\n\n" + ln
+	_stage_node().text = stage_text
 	_clear_container(_hotspots_node())
 	_clear_container(_clues_node())
 	_clear_container(_memories_node())
@@ -542,12 +603,22 @@ func _refresh_region_controls() -> void:
 		var rf_flag = h.get("requiresFlag", "")
 		if rf_flag != "" and not (state.get(rf_flag, false) or state["clues"].has(rf_flag)):
 			continue
+		# 雨天限定书（v6 §八）：仅 weather=rain 时可见，把天气变成探索变量
+		if h.get("rain_only", false) and state.get("weather", "rain") != "rain":
+			continue
 		var key = rid + ":" + hid
 		var mark = ""
 		if state["visitedHot"].has(key):
 			mark = "（看过了）"
+		# 书架移位（v6 §八）：热点 label 可按夜序微调，制造「馆在呼吸」直觉
+		var label_text: String = h["label"]
+		if h.has("shiftLabel"):
+			var sl = h["shiftLabel"] as Dictionary
+			var sk: String = str(ProgressState.night_index)
+			if sl.has(sk):
+				label_text = sl[sk]
 		var b := Button.new()
-		b.text = h["label"] + mark
+		b.text = label_text + mark
 		b.pressed.connect(_on_hotspot.bind(rid, hid))
 		_hotspots_node().add_child(b)
 	_clear_container(_actions_node())
@@ -586,11 +657,25 @@ func _apply_interaction(rid: String, hid: String, h: Dictionary, key: String) ->
 	var first: bool = not state["examined"].has(key)
 	state["examined"][key] = true
 	state["visitedHot"][key] = true
+	var base_once: String = h.get("once", "")
+	var base_again: String = h.get("again", base_once)
+	# 书架移位（v6 §八）：叙事文本按夜序微调，长期观察产生「馆在呼吸」直觉
+	if h.has("shift"):
+		var sh = h["shift"] as Dictionary
+		var sk: String = str(ProgressState.night_index)
+		if sh.has(sk):
+			var v = sh[sk]
+			if v is String:
+				base_once = v
+				base_again = v
+			elif v is Dictionary:
+				base_once = v.get("once", base_once)
+				base_again = v.get("again", base_once)
 	var narrative := ""
 	if first:
-		narrative = h.get("once", "")
+		narrative = base_once
 	else:
-		narrative = h.get("again", h.get("once", ""))
+		narrative = base_again
 	if narrative != "":
 		_stage_node().text = narrative
 	if h.has("unlocks"):
@@ -621,8 +706,11 @@ func _on_hotspot(rid: String, hid: String) -> void:
 	var h = r["hotspots"][hid] as Dictionary
 	# 内容可声明 "sfx" 键（drawer/water/breath 等），触发对应专用音效（缺省静默回退）
 	AudioManager.play_sfx(h.get("sfx", ""))
-	# 近景：有 closeup 的热点先进入近景，不直接摊开全部内容（锈湖式 zoom-in）
+	# 近景：有 closeup 的热点，先应用基础互动（解锁线索 / 馆员走动 / 馆员台词），
+	# 再进入近景 zoom-in（锈湖式进一步探索）——避免「有近景就跳过基础解锁」。
 	if h.has("closeup"):
+		var key = rid + ":" + hid
+		_apply_interaction(rid, hid, h, key)
 		_enter_closeup(rid, hid)
 		return
 	var key = rid + ":" + hid

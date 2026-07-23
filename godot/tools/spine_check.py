@@ -96,6 +96,26 @@ def main():
         else:
             print("  [OK] 未发现脊柱泄漏")
 
+    # 场景层 scenes.json：其文本经引擎并入所有夜（含序章/A/B/C），
+    # 等同受护栏约束（夜序 0），必须一并扫描。
+    scenes_path = os.path.join(CONTENT_DIR, "scenes.json")
+    if os.path.isfile(scenes_path):
+        with open(scenes_path, encoding="utf-8") as f:
+            sdata = json.load(f)
+        print("[scenes.json] 场景层（受护栏约束，夜序=0）")
+        sleaks = {}
+        _scan_strings(sdata, [], sleaks)
+        if sleaks:
+            total_leaks += len(sleaks)
+            for p in sorted(sleaks.keys(), key=lambda x: ".".join(x)):
+                jp = "$.scenes" + ".".join(p)
+                pats = " / ".join(sorted(sleaks[p]["pats"]))
+                print("  [LEAK] 脊柱泄漏 @ %s" % jp)
+                print("         点破词[%s]" % pats)
+                print("         上下文：...%s..." % sleaks[p]["snippet"])
+        else:
+            print("  [OK] 未发现脊柱泄漏")
+
     print("-" * 48)
     if total_leaks:
         print("拦截：发现 %d 处脊柱泄漏（夜序 < %s 不应点破自认）" % (total_leaks, SPINE_BREAK_NIGHT))
