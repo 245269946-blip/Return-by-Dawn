@@ -92,9 +92,11 @@ git lfs pull
 
 ## GitHub Release 分卷下载
 
-完整交付包在 `visual-assets-v1.0.0` Release 中按 200 MB 分为
-`Return-by-Dawn-visual-assets-2026-07-23.zip.part-00` 至 `part-05`。
-六个分卷必须全部下载到同一目录，再合并为原始 ZIP。
+完整交付包在 `visual-assets-v1.0.0` Release 中分为 7 个文件：
+`part-00`、`part-01`、`part-02`、`part-03`、`part-04a`、`part-04b`
+和 `part-05`。其中 `part-00` 至 `part-03` 为 200 MB，`part-04a`
+与 `part-04b` 为 100 MB，`part-05` 约 18 MB。七个分卷必须全部下载
+到同一目录，再按文件名顺序合并为原始 ZIP。
 
 macOS / Linux：
 
