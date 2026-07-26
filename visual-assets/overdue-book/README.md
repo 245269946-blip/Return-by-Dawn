@@ -90,6 +90,40 @@ git lfs pull
 
 不要删除 `.gitattributes`，否则后续二进制更新会直接进入普通 Git 历史。
 
+## GitHub Release 分卷下载
+
+完整交付包在 `visual-assets-v1.0.0` Release 中按 200 MB 分为
+`Return-by-Dawn-visual-assets-2026-07-23.zip.part-00` 至 `part-05`。
+六个分卷必须全部下载到同一目录，再合并为原始 ZIP。
+
+macOS / Linux：
+
+```bash
+cat Return-by-Dawn-visual-assets-2026-07-23.zip.part-* \
+  > Return-by-Dawn-visual-assets-2026-07-23.zip
+shasum -a 256 Return-by-Dawn-visual-assets-2026-07-23.zip
+```
+
+Windows PowerShell：
+
+```powershell
+$parts = Get-ChildItem "Return-by-Dawn-visual-assets-2026-07-23.zip.part-*" |
+  Sort-Object Name
+$out = [System.IO.File]::Create("Return-by-Dawn-visual-assets-2026-07-23.zip")
+foreach ($part in $parts) {
+  $bytes = [System.IO.File]::ReadAllBytes($part.FullName)
+  $out.Write($bytes, 0, $bytes.Length)
+}
+$out.Dispose()
+Get-FileHash "Return-by-Dawn-visual-assets-2026-07-23.zip" -Algorithm SHA256
+```
+
+合并后 SHA-256 必须为：
+
+```text
+18a9ebd068ef3f1c4bbe298a96401960f8c7414114f646f36f9abc958ba5c9a6
+```
+
 ## 范围边界
 
 本包只负责视觉素材。以下内容不在本目录完成状态内：
@@ -105,4 +139,3 @@ git lfs pull
 3. 运行 JSON、SVG、尺寸、透明度和路径检查；
 4. 更新完成审计；
 5. 通过 GitHub Desktop 提交到独立分支，再合并到主分支。
-
